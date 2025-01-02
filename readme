@@ -1,0 +1,22 @@
+SaaS-Based RFP System
+
+Overview
+
+The SaaS-Based RFP System is designed to streamline the request for proposal (RFP) process, enabling organizations to efficiently manage RFP creation, vendor responses, evaluation, and selection in a cloud-based environment. This system is scalable, secure, and user-friendly, making it ideal for businesses of all sizes.
+
+Features
+
+Multi-Tenant Architecture: Supports multiple organizations with isolated data per tenant.
+Role-Based Access Control (RBAC): Provides granular permissions for Admins, Managers,Accountant and Vendors.
+
+Technology Stack
+
+Backend:
+
+Framework: Node.js with Express
+
+Database: PostgreSQL
+
+ORM: Sequelize
+
+Authentication: JSON Web Tokens (JWT)
