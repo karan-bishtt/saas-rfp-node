@@ -47,13 +47,14 @@ const login = async (req, res) => {
     if (!user) {
       return res
         .status(400)
-        .json({ status: false, error: getMessage("auth.useNotPresent") });
+        .json({ status: false, message: getMessage("auth.useNotPresent") });
     }
     is_matched = await bcrypt.compare(password, user.password);
     if (!is_matched) {
-      return res
-        .status(400)
-        .json({ status: false, error: getMessage("auth.invalidCredentials") });
+      return res.status(400).json({
+        status: false,
+        message: getMessage("auth.invalidCredentials"),
+      });
     } else if (user.status === USERSTATUS.pending) {
       return res.status(401).json({
         status: false,
@@ -83,7 +84,7 @@ const login = async (req, res) => {
   } catch (error) {
     res
       .status(400)
-      .json({ status: false, error: getMessage("auth.invalidCredentials") });
+      .json({ status: false, message: getMessage("auth.invalidCredentials") });
   }
 };
 
@@ -107,7 +108,7 @@ const registerAdmin = async (req, res) => {
     if (existingAdmin) {
       return res
         .status(400)
-        .json({ status: false, error: getMessage("auth.emailAlreadyExist") });
+        .json({ status: false, message: getMessage("auth.emailAlreadyExist") });
     }
     // Check if the tenant already exists
     const doesExist = await Tenants.findOne({
@@ -184,7 +185,7 @@ const registerAccount = async (req, res) => {
     if (existingAccountant) {
       return res
         .status(400)
-        .json({ status: false, error: getMessage("auth.emailAlreadyExist") });
+        .json({ status: false, message: getMessage("auth.emailAlreadyExist") });
     }
 
     // Check if the tenant already exists
@@ -253,7 +254,7 @@ const registerManager = async (req, res) => {
     if (existingManager) {
       return res
         .status(400)
-        .json({ status: false, error: getMessage("auth.emailAlreadyExist") });
+        .json({ status: false, message: getMessage("auth.emailAlreadyExist") });
     }
 
     // Check if the tenant already exists
@@ -329,7 +330,7 @@ const registerVendor = async (req, res) => {
     if (existingVendor) {
       return res
         .status(400)
-        .json({ status: false, error: getMessage("auth.emailAlreadyExist") });
+        .json({ status: false, message: getMessage("auth.emailAlreadyExist") });
     }
 
     // Check if the tenant already exists
@@ -355,7 +356,7 @@ const registerVendor = async (req, res) => {
     if (!categories || categories.length !== category.length) {
       return res.status(400).json({
         status: false,
-        error: getMessage("rfps.invalidCategoryForTenant"),
+        message: getMessage("rfps.invalidCategoryForTenant"),
       });
     }
 

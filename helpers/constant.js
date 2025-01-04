@@ -28,6 +28,12 @@ const RFP_STATUS = {
   applied: "applied",
 };
 
+const REGISTER_COMPANY_URL = "/register-admin";
+const REGISTER_ACCOUNTANT_URL = "/register-accountant";
+const REGISTER_PROCUREMENT_MANAGER_URL = "/register-manager";
+const REGISTER_VENDOR_URL = "/register-vendor";
+const FORGOT_PASSWORD_URL = "/forgot-password";
+
 module.exports = {
   ROLES,
   USERSTATUS,
@@ -35,4 +41,9 @@ module.exports = {
   FILE_SIZE,
   SUPERUSERTENANT,
   RFP_STATUS,
+  REGISTER_COMPANY_URL,
+  REGISTER_ACCOUNTANT_URL,
+  REGISTER_PROCUREMENT_MANAGER_URL,
+  REGISTER_VENDOR_URL,
+  FORGOT_PASSWORD_URL,
 };

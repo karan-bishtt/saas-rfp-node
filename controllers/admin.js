@@ -41,7 +41,7 @@ const getAdmins = async (req, res) => {
 };
 
 // This method is used to approve the admin
-const approveAdmin = async (req, res) => {
+async function approveAdmin(req, res) {
   try {
     const { error, value } = approveAdminStatusValidator.validate(req.body);
     if (error) {
@@ -92,6 +92,6 @@ const approveAdmin = async (req, res) => {
       message: getMessage("admin.approveFailed"),
     });
   }
-};
+}
 
 module.exports = { getAdmins, approveAdmin };

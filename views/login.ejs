@@ -1,0 +1,208 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <title>Login | RFP System</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <meta
+      content="Premium Multipurpose Admin & Dashboard Template"
+      name="description"
+    />
+    <meta content="Themesbrand" name="author" />
+
+    <!-- App favicon -->
+    <link rel="shortcut icon" href="images/favicon.ico" />
+
+    <!-- jQuery -->
+    <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.6.0/jquery.min.js"></script>
+
+    <!-- Bootstrap CSS -->
+    <link
+      href="css/bootstrap.min.css"
+      id="bootstrap-style"
+      rel="stylesheet"
+      type="text/css"
+    />
+    <!-- Icons CSS -->
+    <link href="css/icons.min.css" rel="stylesheet" type="text/css" />
+    <!-- App CSS -->
+    <link
+      href="css/app.min.css"
+      id="app-style"
+      rel="stylesheet"
+      type="text/css"
+    />
+  </head>
+
+  <body>
+    <div class="account-pages my-5 pt-sm-5">
+      <div class="container">
+        <div class="row justify-content-center">
+          <div class="col-md-8 col-lg-6 col-xl-5">
+            <div class="card overflow-hidden">
+              <div class="bg-soft-primary">
+                <div class="row">
+                  <div class="col-12">
+                    <div class="text-primary p-4">
+                      <h5 class="text-primary">Welcome to RFP System!</h5>
+                      <p>Login in to continue</p>
+                    </div>
+                  </div>
+                </div>
+              </div>
+              <div class="card-body pt-0">
+                <div class="p-2">
+                  <!-- Error Messages -->
+                  <div
+                    id="error_message"
+                    class="alert alert-danger d-none"
+                    role="alert"
+                  ></div>
+
+                  <form id="loginForm" class="form-horizontal">
+                    <div class="form-group">
+                      <label for="email">Email</label>
+                      <input
+                        type="text"
+                        class="form-control"
+                        id="email"
+                        name="username"
+                        placeholder="Enter Email"
+                      />
+                      <span id="email_error" class="text-danger"></span>
+                    </div>
+
+                    <div class="form-group">
+                      <label for="password">Password</label>
+                      <input
+                        type="password"
+                        class="form-control"
+                        id="password"
+                        name="password"
+                        placeholder="Enter Password"
+                      />
+                      <span id="password_error" class="text-danger"></span>
+                    </div>
+
+                    <div class="mt-3">
+                      <button
+                        class="btn btn-primary btn-block waves-effect waves-light"
+                        id="login_button"
+                        type="button"
+                      >
+                        Log In
+                      </button>
+                    </div>
+
+                    <div class="mt-4 text-center">
+                      <a href="<%= registerCompanyUrl %>" class="text-muted"
+                        ><i class="mdi mdi-lock mr-1"></i> Register as Admin</a
+                      >
+                    </div>
+                    <div class="mt-4 text-center">
+                      <a href="<%= registerAccountantUrl %>" class="text-muted"
+                        ><i class="mdi mdi-lock mr-1"></i> Register as
+                        Accountant</a
+                      >
+                    </div>
+                    <div class="mt-4 text-center">
+                      <a
+                        href="<%= registerProcurementManagerUrl %>"
+                        class="text-muted"
+                        ><i class="mdi mdi-lock mr-1"></i> Register as
+                        Manager</a
+                      >
+                    </div>
+                    <div class="mt-4 text-center">
+                      <a href="<%= registerVendorUrl %>" class="text-muted"
+                        ><i class="mdi mdi-lock mr-1"></i> Register as Vendor</a
+                      >
+                    </div>
+                    <div class="mt-4 text-center">
+                      <a href="<%= forgotPasswordUrl %>" class="text-muted"
+                        ><i class="mdi mdi-lock mr-1"></i> Forgot your
+                        password?</a
+                      >
+                    </div>
+                  </form>
+                </div>
+              </div>
+            </div>
+            <div class="mt-5 text-center">
+              <p>&copy; <i class="mdi mdi-heart text-danger"></i> RFP System</p>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </body>
+
+  <script>
+    $(document).ready(function () {
+      $("#login_button").click(function () {
+        // Clear error messages
+        $("#email_error").text("");
+        $("#password_error").text("");
+        $("#error_message").addClass("d-none").text("");
+
+        const email = $("#email").val();
+        const password = $("#password").val();
+        let status = true;
+
+        // Validate email
+        if (email === "") {
+          status = false;
+          $("#email_error").text("Email is required");
+        } else if (
+          !/^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$/.test(email)
+        ) {
+          status = false;
+          $("#email_error").text("Invalid email format");
+        }
+
+        // Validate password
+        if (password === "") {
+          status = false;
+          $("#password_error").text("Password is required");
+        }
+
+        if (!status) return; // Stop if validation fails
+
+        // AJAX call to login API
+        $.ajax({
+          url: "/api/login", // Replace with your API endpoint
+          method: "POST",
+          contentType: "application/json",
+          data: JSON.stringify({
+            email: email,
+            password: password,
+          }),
+          beforeSend: function () {
+            $("#login_button").text("Logging in...").attr("disabled", true);
+          },
+          success: function (response) {
+            if (response.status && response.token) {
+              // Save token to local storage
+              localStorage.setItem("auth_token", response.token);
+              window.location.href = "/dashboard";
+            } else {
+              // Show error message from the API response
+              $("#error_message")
+                .removeClass("d-none")
+                .text(response.message || "Invalid credentials");
+            }
+          },
+          error: function (xhr) {
+            const errorMessage =
+              xhr.responseJSON?.message ||
+              "An error occurred. Please try again.";
+            $("#error_message").removeClass("d-none").text(errorMessage);
+          },
+          complete: function () {
+            $("#login_button").text("Log In").attr("disabled", false);
+          },
+        });
+      });
+    });
+  </script>
+</html>
