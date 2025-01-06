@@ -184,7 +184,7 @@
             if (response.status && response.token) {
               // Save token to local storage
               localStorage.setItem("auth_token", response.token);
-              window.location.href = "/dashboard";
+              window.location.href = `${response.role}`;
             } else {
               // Show error message from the API response
               $("#error_message")

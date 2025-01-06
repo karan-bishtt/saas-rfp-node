@@ -13,7 +13,7 @@ const Users = db.Users;
 const getAdmins = async (req, res) => {
   try {
     const admins = await Users.findAll({
-      attributes: ["id", "name", "email", "mobile"],
+      attributes: ["id", "name", "email", "mobile", "status"],
       where: {
         roles: "admin",
       },

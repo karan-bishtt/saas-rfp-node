@@ -1,0 +1,330 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Vendor</title>
+
+    <!-- Include CSS and other dependencies from the base layout -->
+    <%- include('partials/base.ejs') %>
+  </head>
+  <body data-sidebar="dark">
+    <!-- Include Header -->
+    <%- include('partials/headers.ejs') %>
+
+    <!-- Include Sidebar -->
+    <%- include('partials/sidebars.ejs') %>
+
+    <div id="notificationArea" class="alert" style="display: none"></div>
+    <!-- Main Content Starts Here -->
+    <div class="main-content">
+      <div class="container">
+        <div class="row">
+          <div class="col">
+            <div class="d-flex justify-content-between align-items-center">
+              <h1 class="mb-5">Vendor List</h1>
+              <div>
+                <button id="downloadVendorsBtn" class="btn btn-success">
+                  Download Vendors
+                </button>
+              </div>
+            </div>
+            <!-- Loading Indicator -->
+            <div class="loading-indicator" id="loadingIndicator">
+              Loading data, please wait...
+            </div>
+
+            <!-- No Data Available Message -->
+            <div class="no-data d-none" id="noData">No data available.</div>
+            <table class="table table-bordered d-none" id="vendorTable">
+              <thead>
+                <tr>
+                  <th>Name</th>
+                  <th>Email</th>
+                  <th>Mobile</th>
+                  <th>Revenue</th>
+                  <th>No of Employee</th>
+                  <th>Categories</th>
+                  <th>Status</th>
+                  <% if (['admin', 'accountant'].includes(user.roles)) { %>
+                  <th>Action</th>
+                  <% } %>
+                </tr>
+              </thead>
+              <tbody>
+                <!-- Rows will be dynamically added here -->
+              </tbody>
+            </table>
+            <div
+              id="pagination"
+              class="d-none d-flex justify-content-center mt-3"
+            >
+              <!-- Pagination controls will be dynamically added here -->
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Include Footer -->
+    <%- include('partials/footer.ejs') %>
+
+    <script>
+      $(document).ready(function () {
+        const tenant_id = "<%= user.tenant_id %>";
+        const role = "<%= user.roles %>";
+        const rowsPerPage = 5; // Number of rows per page
+        let currentPage = 1; // Current page
+        let vendors = []; // Data storage
+
+        // Show loading indicator
+        const loadingIndicator = $("#loadingIndicator");
+        const noDataMessage = $("#noData");
+        const vendorTable = $("#vendorTable");
+        const pagination = $("#pagination");
+        const downloadButton = $("#downloadVendorsBtn");
+
+        // Fetch vendor data
+        function fetchAccountantData() {
+          loadingIndicator.removeClass("d-none");
+
+          $.ajax({
+            url: `/api/${role}/vendor-list`,
+            method: "GET",
+            contentType: "application/json",
+            data: { tenant_id: tenant_id },
+            beforeSend: function (xhr) {
+              xhr.setRequestHeader(
+                "Authorization",
+                `Bearer ${localStorage.getItem("auth_token")}`
+              );
+            },
+            success: function (response) {
+              if (response.status) {
+                vendors = response.data.vendors;
+
+                if (vendors.length === 0) {
+                  noDataMessage.removeClass("d-none"); // Show no data message
+                } else {
+                  renderTable(); // Render table on load
+                  renderPagination(); // Render pagination controls
+                }
+              }
+            },
+            error: function (xhr, status, error) {
+              console.error("Error fetching data from API:", error);
+            },
+            complete: function () {
+              loadingIndicator.addClass("d-none"); // Hide loading indicator after data is fetched
+              if (vendors.length > 0) {
+                vendorTable.removeClass("d-none"); // Show table
+                pagination.removeClass("d-none"); // Show pagination
+              }
+            },
+          });
+        }
+
+        // Render table data with pagination
+        function renderTable() {
+          const tableBody = $("#vendorTable tbody");
+          tableBody.empty();
+
+          const start = (currentPage - 1) * rowsPerPage;
+          const end = start + rowsPerPage;
+          const paginatedData = vendors.slice(start, end);
+
+          paginatedData.forEach(function (vendor) {
+            const statusClass =
+              vendor.status === "Pending"
+                ? "text-warning"
+                : vendor.status === "Rejected"
+                ? "text-danger"
+                : "text-success";
+
+            const actionButtons =
+              vendor.status === "Pending"
+                ? `
+              <button class="btn btn-sm btn-primary change-status-approve" data-id="${vendor.user_id}">Approve</button>
+              <button class="btn btn-sm btn-danger change-status-disapprove" data-id="${vendor.user_id}">Reject</button>
+            `
+                : "";
+            const categoryTags = vendor.category
+              .map((cat) => `<span class="badge badge-info">${cat.name}</span>`)
+              .join(" "); // Generate tags and join them with a space
+
+            let actionColumn = "";
+            if (["admin", "accountant"].includes(role)) {
+              actionColumn = `<td id="action-${vendor.user_id}">${actionButtons}</td>`;
+            }
+            const row = `
+              <tr id="row-${vendor.user_id}">
+                <td>${vendor.name}</td>
+                <td>${vendor.email}</td>
+                <td>${vendor.mobile}</td>
+                <td>${vendor.revenue}</td>
+                <td>${vendor.no_of_employees}</td>
+                <td>${categoryTags}</td>
+                <td class=${statusClass}>${vendor.status}</td>
+                ${actionColumn}
+              </tr>
+            `;
+            tableBody.append(row);
+          });
+
+          // Attach click event to the action buttons
+          $(".change-status-approve").on("click", function () {
+            const userId = $(this).data("id");
+            changeStatus(userId, "Approved");
+          });
+          // Attach click event to the action buttons
+          $(".change-status-disapprove").on("click", function () {
+            const userId = $(this).data("id");
+            changeStatus(userId, "Rejected");
+          });
+        }
+
+        // Render pagination controls
+        function renderPagination() {
+          const pagination = $("#pagination");
+          pagination.empty();
+
+          const totalPages = Math.ceil(vendors.length / rowsPerPage);
+
+          for (let i = 1; i <= totalPages; i++) {
+            const button = `<button class="btn btn-sm ${
+              i === currentPage ? "btn-primary" : "btn-secondary"
+            } mx-1 page-btn" data-page="${i}">${i}</button>`;
+            pagination.append(button);
+          }
+
+          // Attach click event to pagination buttons
+          $(".page-btn").on("click", function () {
+            currentPage = parseInt($(this).data("page"));
+            renderTable();
+            renderPagination();
+          });
+        }
+
+        // Function to change the status of a user
+        function changeStatus(userId, newStatus) {
+          const actionCell = $(`#action-${userId}`);
+          const originalButtons = actionCell.html();
+          actionCell.html('<span class="loading-text">Loading...</span>');
+          $.ajax({
+            url: `/api/${role}/approve-vendor`,
+            method: "POST",
+            contentType: "application/json",
+            data: JSON.stringify({
+              user_id: userId,
+              status: newStatus,
+              tenant_id: tenant_id,
+            }),
+            beforeSend: function (xhr) {
+              xhr.setRequestHeader(
+                "Authorization",
+                `Bearer ${localStorage.getItem("auth_token")}`
+              );
+            },
+            success: function (response) {
+              if (response?.status) {
+                showNotification("success", response?.message);
+                const statusCell = $(`#row-${userId} td:nth-child(5)`);
+                statusCell
+                  .text(newStatus) // Update the text
+                  .removeClass("text-warning text-danger text-success") // Remove existing classes
+                  .addClass(
+                    newStatus === "Pending"
+                      ? "text-warning"
+                      : newStatus === "Rejected"
+                      ? "text-danger"
+                      : "text-success"
+                  );
+                const userIndex = vendors.findIndex(
+                  (vendor) => vendor.user_id === userId
+                );
+                if (userIndex !== -1) {
+                  vendors[userIndex].status = newStatus; // Update the status
+                }
+
+                actionCell.html("");
+                renderTable();
+              } else {
+                showNotification(
+                  "danger",
+                  response.message || "An error occurred."
+                );
+                actionCell.html(originalButtons);
+              }
+            },
+            error: function (xhr, status, error) {
+              showNotification(
+                "danger",
+                xhr.responseJSON?.message || "Error: " + error
+              );
+              actionCell.html(originalButtons);
+            },
+          });
+        }
+
+        // Handle download vendors button click
+        downloadButton.on("click", function () {
+          // Disable the button and show loading text
+          downloadButton.prop("disabled", true).text("Downloading...");
+
+          // Make API call to download vendors Excel file
+          $.ajax({
+            url: `/api/${role}/vendor-excel`,
+            method: "GET",
+            data: { tenant_id: tenant_id },
+            xhrFields: {
+              responseType: "blob", // Ensure the response is treated as a binary file
+            },
+            beforeSend: function (xhr) {
+              xhr.setRequestHeader(
+                "Authorization",
+                `Bearer ${localStorage.getItem("auth_token")}`
+              );
+            },
+            success: function (blob) {
+              const downloadUrl = window.URL.createObjectURL(blob);
+              const link = document.createElement("a");
+              link.href = downloadUrl;
+              link.download = "vendors.xlsx"; // Set the default file name
+              document.body.appendChild(link);
+              link.click();
+              link.remove();
+
+              // Reset the button text after download
+              downloadButton.prop("disabled", false).text("Download Vendors");
+            },
+            error: function (xhr, status, error) {
+              console.error("Error downloading Excel file:", error);
+              showNotification("danger", "Failed to download Excel file.");
+
+              // Reset the button text after error
+              downloadButton.prop("disabled", false).text("Download Vendors");
+            },
+          });
+        });
+
+        // Initial Fetch Call
+        fetchAccountantData();
+      });
+
+      // Function to show notification
+      function showNotification(type, message) {
+        const notificationArea = $("#notificationArea");
+        notificationArea
+          .removeClass()
+          .addClass(`alert alert-${type}`)
+          .text(message)
+          .fadeIn();
+
+        // Automatically hide after 3 seconds
+        setTimeout(() => {
+          notificationArea.fadeOut();
+        }, 3000);
+      }
+    </script>
+  </body>
+</html>

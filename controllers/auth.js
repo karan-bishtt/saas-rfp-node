@@ -17,6 +17,7 @@ const {
   confirmPasswordValidator,
   loginValidator,
 } = require("../validators/auth");
+const { clearCookieToken, setCookieToken } = require("../middleware/CookieVerification");
 let Users = db.Users;
 let VendorDetails = db.VendorDetails;
 let Accountant = db.Accountant;
@@ -80,6 +81,9 @@ const login = async (req, res) => {
       type: user.type,
       roles: user.roles,
     };
+    // Set token in cookie
+    setCookieToken(res, token);
+
     res.json(response);
   } catch (error) {
     res
@@ -590,6 +594,28 @@ const getTenants = async (req, res) => {
   }
 };
 
+/**
+ * This method is used to logout the user
+ * @param {object} req
+ * @param {object} res
+ */
+const logout = (req, res) => {
+  try {
+    // Clear the auth_token cookie
+    clearCookieToken(res);
+    // Optionally redirect to the login page or send a success response
+    return res
+      .status(200)
+      .json({ status: true, message: getMessage("auth.logout") });
+  } catch (error) {
+    res
+      .status(400)
+      .json({ status: false, message: getMessage("auth.failedLogout") });
+  }
+};
+
+module.exports = { logout };
+
 // Check if the user exists
 module.exports = {
   login,
@@ -601,4 +627,5 @@ module.exports = {
   registerManager,
   registerAccount,
   getTenants,
+  logout,
 };

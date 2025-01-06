@@ -35,8 +35,8 @@ const { formDataMiddleware } = require("../middleware/multer");
 // Categories route
 router.get("/categories", categoriesMethod);
 router.post("/add-category", categoriesMethod);
-router.post("/upload-category", uploadCategoriesFromExcel);
-router.put("/change-category-name", formDataMiddleware, categoriesMethod);
+router.post("/upload-category", formDataMiddleware, uploadCategoriesFromExcel);
+router.put("/change-category-name", categoriesMethod);
 router.delete("/delete-category", categoriesMethod);
 
 // Vendors route

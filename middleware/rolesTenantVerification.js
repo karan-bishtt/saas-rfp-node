@@ -86,10 +86,30 @@ const superAdminTenantVerification = async (req, res, next) => {
   next();
 };
 
+const roleRouteVerification = async (req, res, next) => {
+  try {
+    const user = req.user;
+    const roleFromUrl = req.originalUrl.split("/")[1];
+
+    if (user.roles !== roleFromUrl) {
+      // Redirect user only if they are not already on their correct role path
+      const redirectUrl = `/${user.roles}`;
+      if (req.originalUrl.startsWith(redirectUrl)) {
+        return res.redirect("/");
+      }
+      return res.redirect(redirectUrl);
+    }
+    next();
+  } catch (error) {
+    return res.redirect("/");
+  }
+};
+
 module.exports = {
   adminTenantVerification,
   vendorTenantVerification,
   managerTenantVerification,
   accountantTenantVerification,
   superAdminTenantVerification,
+  roleRouteVerification,
 };

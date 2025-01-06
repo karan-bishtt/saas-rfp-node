@@ -1,0 +1,336 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Category List</title>
+
+    <!-- Include CSS and other dependencies from the base layout -->
+    <%- include('partials/base.ejs') %>
+  </head>
+  <body data-sidebar="dark">
+    <!-- Include Header -->
+    <%- include('partials/headers.ejs') %>
+
+    <!-- Include Sidebar -->
+    <%- include('partials/sidebars.ejs') %>
+
+    <!-- Main Content Starts Here -->
+    <div id="notificationArea" class="alert d-none"></div>
+    <div class="main-content">
+      <!-- Notification Area -->
+      <div class="container">
+        <div class="row">
+          <div class="col">
+            <div class="d-flex justify-content-between align-items-center">
+              <h1 class="mb-5">Category List</h1>
+              <% if (['admin', 'manager'].includes(user.roles)) { %>
+              <div>
+                <a
+                  href="<%= `/${user.roles}/create-category` %>"
+                  class="text-muted"
+                >
+                  <i class="mdi mdi-pencil"></i> Create Category
+                </a>
+              </div>
+              <% } %>
+            </div>
+
+            <!-- Loading Indicator -->
+            <div id="loadingIndicator" class="text-center">Loading...</div>
+
+            <!-- No Data Message -->
+            <div id="noData" class="no-data d-none">
+              No categories available.
+            </div>
+
+            <!-- Category Table -->
+            <table class="table table-bordered d-none" id="categoryTable">
+              <thead>
+                <tr>
+                  <th>ID</th>
+                  <th>Name</th>
+                  <% if (['admin', 'manager'].includes(user.roles)) { %>
+                  <th>Action</th>
+                  <% } %>
+                </tr>
+              </thead>
+              <tbody>
+                <!-- Rows will be dynamically added here -->
+              </tbody>
+            </table>
+
+            <!-- Pagination Controls -->
+            <div
+              id="paginationControls"
+              class="d-flex justify-content-center mt-3"
+            ></div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Include Footer -->
+    <%- include('partials/footer.ejs') %>
+
+    <!-- JavaScript Section -->
+    <script>
+      $(document).ready(function () {
+        const tenant_id = "<%= user.tenant_id %>";
+        const role = "<%= user.roles %>";
+        const categoryTable = $("#categoryTable");
+        const tableBody = categoryTable.find("tbody");
+        const notificationArea = $("#notificationArea");
+        const createCategory = $("#createCategory");
+        const loadingIndicator = $("#loadingIndicator");
+        const noDataMessage = $("#noData");
+        const paginationControls = $("#paginationControls");
+
+        let categories = []; // Store categories data
+        let currentPage = 1; // Track the current page
+        const rowsPerPage = 5; // Number of rows per page
+
+        // Use event delegation for delete-category
+        if (tableBody.length) {
+          tableBody.on("click", ".delete-category", function () {
+            const categoryId = $(this).data("id");
+            deleteCategory(categoryId);
+          });
+        }
+
+        // Fetch all categories
+        function fetchCategories() {
+          loadingIndicator.removeClass("d-none");
+
+          $.ajax({
+            url: `/api/${role}/categories?tenant_id=${tenant_id}`,
+            method: "GET",
+            beforeSend: function (xhr) {
+              xhr.setRequestHeader(
+                "Authorization",
+                `Bearer ${localStorage.getItem("auth_token")}`
+              );
+            },
+            success: function (response) {
+              if (response.status) {
+                categories = response.data.categories;
+                if (Object.keys(categories).length === 0) {
+                  noDataMessage.removeClass("d-none");
+                  categoryTable.addClass("d-none");
+                } else {
+                  currentPage = 1; // Reset to the first page
+                  renderTable(); // Render table with pagination
+                  categoryTable.removeClass("d-none");
+                  noDataMessage.addClass("d-none");
+                }
+              } else {
+                showNotification("danger", "Failed to fetch categories.");
+              }
+            },
+            error: function () {
+              showNotification("danger", "Error occurred while fetching data.");
+            },
+            complete: function () {
+              loadingIndicator.addClass("d-none");
+            },
+          });
+        }
+
+        // Render table data with pagination
+        function renderTable() {
+          tableBody.empty();
+          paginationControls.empty();
+
+          const start = (currentPage - 1) * rowsPerPage;
+          const end = start + rowsPerPage;
+          const paginatedData = Object.values(categories).slice(start, end);
+
+          paginatedData.forEach((category, index) => {
+            const actionButtons = `
+            <button class="btn btn-sm btn-primary update-category" data-id="${category.id}">Update</button>
+            <button class="btn btn-sm btn-danger delete-category" data-id="${category.id}">Delete</button>
+          `;
+
+            let actionColumn = "";
+            if (["admin", "manager"].includes(role)) {
+              actionColumn = ` <td id="action-${category.id}">${actionButtons}</td>`;
+            }
+
+            const row = `
+            <tr id="row-${category.id}">
+              <td>${start + index + 1}</td>
+              <td class="editable" data-id="${category.id}">${
+              category.name
+            }</td>
+             ${actionColumn}
+            </tr>
+          `;
+            tableBody.append(row);
+          });
+
+          renderPaginationControls();
+          attachUpdateListeners(); // Reattach update listeners for the rendered rows
+        }
+
+        // Render pagination controls
+        function renderPaginationControls() {
+          const totalPages = Math.ceil(
+            Object.keys(categories).length / rowsPerPage
+          );
+
+          for (let i = 1; i <= totalPages; i++) {
+            const button = `<button class="btn btn-sm ${
+              i === currentPage ? "btn-primary" : "btn-secondary"
+            } mx-1 page-btn" data-page="${i}">${i}</button>`;
+            paginationControls.append(button);
+          }
+
+          // Attach click event for pagination buttons
+          $(".page-btn").on("click", function () {
+            currentPage = parseInt($(this).data("page"));
+            renderTable(); // Re-render table for the selected page
+          });
+        }
+
+        // Attach listeners to the update buttons
+        function attachUpdateListeners() {
+          $(".update-category")
+            .off("click")
+            .on("click", function () {
+              const categoryId = $(this).data("id");
+              const row = $(`#row-${categoryId}`);
+              const nameCell = row.find(".editable");
+              const originalName = nameCell.text().trim();
+
+              nameCell.html(
+                `<input type="text" class="form-control" value="${originalName}" />`
+              );
+
+              const actionCell = $(`#action-${categoryId}`);
+              actionCell.html(`
+            <button class="btn btn-sm btn-success save-category" data-id="${categoryId}">Save</button>
+            <button class="btn btn-sm btn-secondary cancel-category" data-id="${categoryId}">Cancel</button>
+          `);
+
+              attachSaveCancelListeners(categoryId, originalName);
+            });
+        }
+
+        // Attach listeners to Save and Cancel buttons
+        function attachSaveCancelListeners(categoryId, originalName) {
+          $(`.save-category[data-id="${categoryId}"]`)
+            .off("click")
+            .on("click", function () {
+              const nameCell = $(`#row-${categoryId} .editable`);
+              const newName = nameCell.find("input").val().trim();
+
+              if (!newName) {
+                showNotification("danger", "Category name cannot be empty.");
+                return;
+              }
+
+              $.ajax({
+                url: `/api/${role}/change-category-name`,
+                method: "PUT",
+                contentType: "application/json",
+                data: JSON.stringify({
+                  id: categoryId,
+                  name: newName,
+                  tenant_id: tenant_id,
+                }),
+                beforeSend: function (xhr) {
+                  xhr.setRequestHeader(
+                    "Authorization",
+                    `Bearer ${localStorage.getItem("auth_token")}`
+                  );
+                },
+                success: function (response) {
+                  if (response.status) {
+                    nameCell.text(newName);
+                    Object.values(categories).find(
+                      (category) => category.id === categoryId
+                    ).name = newName;
+                    showNotification(
+                      "success",
+                      response.message || "Category updated successfully."
+                    );
+                  } else {
+                    showNotification("danger", response.message);
+                  }
+                },
+                error: function () {
+                  showNotification("danger", "Error occurred while updating.");
+                },
+                complete: function () {
+                  resetActions(categoryId);
+                },
+              });
+            });
+
+          $(`.cancel-category[data-id="${categoryId}"]`)
+            .off("click")
+            .on("click", function () {
+              const nameCell = $(`#row-${categoryId} .editable`);
+              nameCell.text(originalName);
+              resetActions(categoryId);
+            });
+        }
+
+        function resetActions(categoryId) {
+          const actionCell = $(`#action-${categoryId}`);
+          actionCell.html(`
+          <button class="btn btn-sm btn-primary update-category" data-id="${categoryId}">Update</button>
+          <button class="btn btn-sm btn-danger delete-category" data-id="${categoryId}">Delete</button>
+        `);
+
+          attachUpdateListeners();
+        }
+
+        function showNotification(type, message) {
+          notificationArea
+            .removeClass()
+            .addClass(`alert alert-${type}`)
+            .text(message)
+            .fadeIn();
+
+          setTimeout(() => {
+            notificationArea.fadeOut();
+          }, 3000);
+        }
+
+        function deleteCategory(categoryId) {
+          $.ajax({
+            url: `/api/${role}/delete-category?id=${categoryId}&tenant_id=${tenant_id}`,
+            method: "DELETE",
+            contentType: "application/json",
+            beforeSend: function (xhr) {
+              xhr.setRequestHeader(
+                "Authorization",
+                `Bearer ${localStorage.getItem("auth_token")}`
+              );
+            },
+            success: function (response) {
+              if (response.status) {
+                showNotification(
+                  "success",
+                  response.message || "Category deleted successfully."
+                );
+                fetchCategories();
+              } else {
+                showNotification("danger", response.message);
+              }
+            },
+            error: function (xhr) {
+              showNotification(
+                "danger",
+                xhr?.responseJSON?.message || "Error occurred while deleting."
+              );
+            },
+          });
+        }
+
+        fetchCategories();
+      });
+    </script>
+  </body>
+</html>

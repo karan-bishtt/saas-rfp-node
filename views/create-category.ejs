@@ -1,0 +1,212 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Create Category</title>
+
+    <!-- Include CSS and other dependencies from the base layout -->
+    <%- include('partials/base.ejs') %>
+  </head>
+  <body data-sidebar="dark">
+    <!-- Include Header -->
+    <%- include('partials/headers.ejs') %>
+
+    <!-- Include Sidebar -->
+    <%- include('partials/sidebars.ejs') %>
+
+    <!-- Main Content Starts Here -->
+    <div class="main-content">
+      <div class="container">
+        <div class="row">
+          <div class="col">
+            <div class="d-flex justify-content-between align-items-center">
+              <h1 class="mb-5">Create Category</h1>
+              <!-- Notification Area -->
+              <div class="d-flex align-items-center">
+                <div id="notificationArea" class="alert d-none"></div>
+                <a
+                  href="<%= staticPath('upload-categories.xlsx') %>"
+                  download
+                  class="text-muted me-3"
+                >
+                  <i class="mdi mdi-information-outline"></i> Download Excel
+                  Format
+                </a>
+                <button
+                  class="btn btn-primary waves-effect waves-light"
+                  id="bulkAddCategory"
+                  type="button"
+                >
+                  Bulk Add Category
+                </button>
+              </div>
+            </div>
+
+            <!-- Create Category Form -->
+            <form id="createCategoryForm">
+              <!-- Category Name -->
+              <div class="form-group">
+                <label for="categoryName">Category Name*</label>
+                <input
+                  type="text"
+                  id="categoryName"
+                  name="name"
+                  class="form-control"
+                  placeholder="Enter category name"
+                  required
+                />
+                <span id="error_categoryName" class="text-danger"></span>
+              </div>
+
+              <!-- Submit Button -->
+              <button type="submit" class="btn btn-primary">
+                Create Category
+              </button>
+            </form>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Include Footer -->
+    <%- include('partials/footer.ejs') %>
+
+    <script>
+      $(document).ready(function () {
+        const tenant_id = "<%= user.tenant_id %>";
+        const role = "<%= user.roles %>";
+        const createCategoryForm = $("#createCategoryForm");
+        const notificationArea = $("#notificationArea");
+        const bulkAddCategory = $("#bulkAddCategory");
+
+        // Submit the Create Category Form
+        createCategoryForm.on("submit", function (e) {
+          e.preventDefault(); // Prevent default form submission
+
+          const formData = {
+            name: $("#categoryName").val(),
+            tenant_id: tenant_id,
+          };
+
+          // Clear previous errors
+          $("#error_categoryName").text("");
+
+          // Basic client-side validation
+          if (!formData.name) {
+            $("#error_categoryName").text("Category name is required.");
+            return;
+          }
+
+          // AJAX call to create a new category
+          $.ajax({
+            url: `/api/${role}/add-category`,
+            method: "POST",
+            contentType: "application/json",
+            data: JSON.stringify(formData),
+            beforeSend: function (xhr) {
+              xhr.setRequestHeader(
+                "Authorization",
+                `Bearer ${localStorage.getItem("auth_token")}`
+              );
+              showNotification("info", "Creating category...");
+            },
+            success: function (response) {
+              if (response.status) {
+                showNotification(
+                  "success",
+                  response.message || "Category created successfully."
+                );
+                createCategoryForm[0].reset(); // Reset the form
+              } else {
+                showNotification(
+                  "danger",
+                  response.message || "An error occurred."
+                );
+              }
+            },
+            error: function (xhr, status, error) {
+              const errorMessage =
+                xhr.responseJSON?.message || "Error: " + error;
+              showNotification("danger", errorMessage);
+            },
+          });
+        });
+
+        // Bulk Add Category - File Upload
+        bulkAddCategory.on("click", function () {
+          const fileInput = $("<input>")
+            .attr("type", "file")
+            .attr("accept", ".xlsx, .xls")
+            .on("change", handleFileUpload);
+
+          fileInput.trigger("click"); // Trigger file dialog
+        });
+
+        function handleFileUpload(event) {
+          const file = event.target.files[0];
+          if (!file) {
+            showNotification("danger", "No file selected.");
+            return;
+          }
+
+          const formData = new FormData();
+          formData.append("file", file);
+          formData.append("tenant_id", tenant_id);
+
+          // Disable button and show loading
+          bulkAddCategory.prop("disabled", true).text("Uploading...");
+
+          // AJAX call to upload the file
+          $.ajax({
+            url: `/api/${role}/upload-category`,
+            method: "POST",
+            processData: false,
+            contentType: false,
+            data: formData,
+            beforeSend: function (xhr) {
+              xhr.setRequestHeader(
+                "Authorization",
+                `Bearer ${localStorage.getItem("auth_token")}`
+              );
+            },
+            success: function (response) {
+              if (response.status) {
+                showNotification(
+                  "success",
+                  response.message || "Categories added successfully."
+                );
+              } else {
+                showNotification(
+                  "danger",
+                  response.message || "Failed to upload categories."
+                );
+              }
+            },
+            error: function (xhr, status, error) {
+              const errorMessage =
+                xhr.responseJSON?.message || "Error: " + error;
+              showNotification("danger", errorMessage);
+            },
+            complete: function () {
+              bulkAddCategory.prop("disabled", false).text("Bulk Add Category");
+            },
+          });
+        }
+
+        // Function to show notifications
+        function showNotification(type, message) {
+          notificationArea
+            .removeClass()
+            .addClass(`alert alert-${type}`)
+            .text(message)
+            .fadeIn();
+
+          setTimeout(() => {
+            notificationArea.fadeOut();
+          }, 3000);
+        }
+      });
+    </script>
+  </body>
+</html>

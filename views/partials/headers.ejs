@@ -1,0 +1,56 @@
+<header id="page-topbar">
+  <div class="navbar-header">
+    <div class="d-flex">
+      <!-- LOGO -->
+      <div class="navbar-brand-box">
+        <a href="/" class="logo logo-light">
+          <span class="logo-sm">
+            <img src=<%= staticPath('images/velocity_logo.png') %> alt="Logo"
+            height="40" />
+          </span>
+          <span class="logo-lg">
+            <img src= <%= staticPath('images/velocity_logo.png') %> alt="Logo"
+            />
+          </span>
+        </a>
+      </div>
+    </div>
+
+    <div class="d-flex pr-2">
+      <div class="dropdown d-inline-block">
+        <span class="d-none d-xl-inline-block ml-1">
+          Welcome <%= user.name || user.email || user.roles%>
+        </span>
+        &nbsp;&nbsp;
+
+        <button id="logout-button" class="btn btn-danger">Logout</button>
+      </div>
+    </div>
+  </div>
+</header>
+
+<script>
+  $(document).ready(function () {
+    $("#logout-button").click(function () {
+      $.ajax({
+        url: "/logout",
+        type: "POST",
+        beforeSend: function (xhr) {
+          xhr.setRequestHeader(
+            "Authorization",
+            `Bearer ${localStorage.getItem("auth_token")}`
+          );
+        },
+        success: function (response) {
+          if (response.status) {
+            localStorage.removeItem("auth_token");
+            window.location.href = "/";
+          }
+        },
+        error: function () {
+          alert("An error occurred during logout. Please try again.");
+        },
+      });
+    });
+  });
+</script>

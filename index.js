@@ -10,6 +10,7 @@ const {
   managerTenantVerification,
   accountantTenantVerification,
   superAdminTenantVerification,
+  roleRouteVerification,
 } = require("./middleware/rolesTenantVerification");
 
 // Importing JWT helper
@@ -24,28 +25,76 @@ const managerRoute = require("./routes/manager");
 const superAdminRoute = require("./routes/superAdmin");
 const publicRoutes = require("./routes/publicRoutes");
 const privateRouteAdmin = require("./routes/privateRouteAdmin");
+const privateRouteManager = require("./routes/privateRouteManager");
+const privateRouteAccountant = require("./routes/privateRouteAccountant");
+const privateRouteVendor = require("./routes/privateRouteVendor");
+const privateRouteSuperUser = require("./routes/privateRouteSuperUser");
+
 const { getMessage } = require("./lang");
 const { formDataMiddleware } = require("./middleware/multer");
+const {
+  authenticateCookieToken,
+  nonAuthenticateRoutes,
+} = require("./middleware/CookieVerification");
+const cookieParser = require("cookie-parser");
+const { logout } = require("./controllers/auth");
 
 const app = express();
-// Adding template engine
+
+// Middleware -----------------------------------------------
+// Use cookie-parser
+app.use(cookieParser());
+app.use(cors());
+app.use(express.json());
+app.use(express.urlencoded({ extended: true }));
+// Adding static file
+app.use(express.static(path.join(__dirname, "assets")));
+app.locals.staticPath = (file) => `/${file}`;
+// Adding template engine ----------------------------------
 app.set("view engine", "ejs");
 app.set("views", path.join(__dirname, "views"));
 
-// Middleware -----------------------------------------------
-app.use(cors());
-app.use(express.json());
-// Adding static file
-app.use(express.static("assets"));
 // Routes ---------------------------------------------------
 
 // Template Routes ------------------
-app.use("/", publicRoutes);
-app.use("/admin", privateRouteAdmin);
+app.post("/logout", verifyToken, logout);
+
+app.use(
+  "/admin",
+  authenticateCookieToken,
+  roleRouteVerification,
+  privateRouteAdmin
+);
+
+app.use(
+  "/manager",
+  authenticateCookieToken,
+  roleRouteVerification,
+  privateRouteManager
+);
+
+app.use(
+  "/accountant",
+  authenticateCookieToken,
+  roleRouteVerification,
+  privateRouteAccountant
+);
+
+app.use(
+  "/vendor",
+  authenticateCookieToken,
+  roleRouteVerification,
+  privateRouteVendor
+);
+
+app.use(
+  "/super_admin",
+  authenticateCookieToken,
+  roleRouteVerification,
+  privateRouteSuperUser
+);
 
 // API ROUTES ----------------------
-app.use("/api", formDataMiddleware, AuthRoute);
-
 app.use("/api/admin", verifyToken, adminTenantVerification, AdminRoute);
 
 app.use(
@@ -73,12 +122,16 @@ app.use(
 );
 
 app.use(
-  "/api/super-admin",
+  "/api/super_admin",
   verifyToken,
   formDataMiddleware,
   superAdminTenantVerification,
   superAdminRoute
 );
+
+app.use("/api", formDataMiddleware, AuthRoute);
+
+app.use("/", nonAuthenticateRoutes, publicRoutes);
 
 // Error Handler --------------------------------------------
 app.use((err, req, res, next) => {

@@ -33,6 +33,7 @@ const REGISTER_ACCOUNTANT_URL = "/register-accountant";
 const REGISTER_PROCUREMENT_MANAGER_URL = "/register-manager";
 const REGISTER_VENDOR_URL = "/register-vendor";
 const FORGOT_PASSWORD_URL = "/forgot-password";
+const CREATE_CATEGORY_URL = "/create-category";
 
 module.exports = {
   ROLES,
@@ -46,4 +47,5 @@ module.exports = {
   REGISTER_PROCUREMENT_MANAGER_URL,
   REGISTER_VENDOR_URL,
   FORGOT_PASSWORD_URL,
+  CREATE_CATEGORY_URL,
 };

@@ -1,0 +1,274 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Accountant</title>
+
+    <!-- Include CSS and other dependencies from the base layout -->
+    <%- include('partials/base.ejs') %>
+  </head>
+  <body data-sidebar="dark">
+    <!-- Include Header -->
+    <%- include('partials/headers.ejs') %>
+
+    <!-- Include Sidebar -->
+    <%- include('partials/sidebars.ejs') %>
+
+    <!-- Main Content Starts Here -->
+    <div class="main-content">
+      <div class="container">
+        <div class="row">
+          <div class="col">
+            <div class="d-flex justify-content-between align-items-center">
+              <h1 class="mb-5">Accountant List</h1>
+              <div
+                id="notificationArea"
+                class="alert"
+                style="display: none"
+              ></div>
+            </div>
+            <!-- Loading Indicator -->
+            <div class="loading-indicator" id="loadingIndicator">
+              Loading data, please wait...
+            </div>
+
+            <!-- No Data Available Message -->
+            <div class="no-data d-none" id="noData">No data available.</div>
+            <table class="table table-bordered d-none" id="accountantTable">
+              <thead>
+                <tr>
+                  <th>Name</th>
+                  <th>Email</th>
+                  <th>Mobile</th>
+                  <th>License Number</th>
+                  <th>Status</th>
+                  <th>Action</th>
+                </tr>
+              </thead>
+              <tbody>
+                <!-- Rows will be dynamically added here -->
+              </tbody>
+            </table>
+            <div
+              id="pagination"
+              class="d-none d-flex justify-content-center mt-3"
+            >
+              <!-- Pagination controls will be dynamically added here -->
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Include Footer -->
+    <%- include('partials/footer.ejs') %>
+
+    <script>
+      $(document).ready(function () {
+        const tenant_id = "<%= user.tenant_id %>";
+        const role = "<%= user.roles %>";
+        const rowsPerPage = 5; // Number of rows per page
+        let currentPage = 1; // Current page
+        let accountants = []; // Data storage
+
+        // Show loading indicator
+        const loadingIndicator = $("#loadingIndicator");
+        const noDataMessage = $("#noData");
+        const accountantTable = $("#accountantTable");
+        const pagination = $("#pagination");
+
+        // Fetch accountant data
+        function fetchAccountantData() {
+          loadingIndicator.removeClass("d-none");
+
+          $.ajax({
+            url: `/api/${role}/accountant-list`,
+            method: "GET",
+            contentType: "application/json",
+            data: { tenant_id: tenant_id },
+            beforeSend: function (xhr) {
+              xhr.setRequestHeader(
+                "Authorization",
+                `Bearer ${localStorage.getItem("auth_token")}`
+              );
+            },
+            success: function (response) {
+              if (response.status) {
+                accountants = response.data.accountants;
+
+                if (accountants.length === 0) {
+                  noDataMessage.removeClass("d-none"); // Show no data message
+                } else {
+                  renderTable(); // Render table on load
+                  renderPagination(); // Render pagination controls
+                }
+              }
+            },
+            error: function (xhr, status, error) {
+              console.error("Error fetching data from API:", error);
+            },
+            complete: function () {
+              loadingIndicator.addClass("d-none"); // Hide loading indicator after data is fetched
+              if (accountants.length > 0) {
+                accountantTable.removeClass("d-none"); // Show table
+                pagination.removeClass("d-none"); // Show pagination
+              }
+            },
+          });
+        }
+
+        // Render table data with pagination
+        function renderTable() {
+          const tableBody = $("#accountantTable tbody");
+          tableBody.empty();
+
+          const start = (currentPage - 1) * rowsPerPage;
+          const end = start + rowsPerPage;
+          const paginatedData = accountants.slice(start, end);
+
+          paginatedData.forEach(function (accountant) {
+            const statusClass =
+              accountant.status === "Pending"
+                ? "text-warning"
+                : accountant.status === "Rejected"
+                ? "text-danger"
+                : "text-success";
+
+            const actionButtons =
+              accountant.status === "Pending"
+                ? `
+              <button class="btn btn-sm btn-primary change-status-approve" data-id="${accountant.user_id}">Approve</button>
+              <button class="btn btn-sm btn-danger change-status-disapprove" data-id="${accountant.user_id}">Reject</button>
+            `
+                : "";
+
+            const row = `
+              <tr id="row-${accountant.user_id}">
+                <td>${accountant.name}</td>
+                <td>${accountant.email}</td>
+                <td>${accountant.mobile}</td>
+                <td>${accountant.licence_number}</td>
+                <td class=${statusClass}>${accountant.status}</td>
+                <td id="action-${accountant.user_id}">${actionButtons}</td>
+              </tr>
+            `;
+            tableBody.append(row);
+          });
+
+          // Attach click event to the action buttons
+          $(".change-status-approve").on("click", function () {
+            const userId = $(this).data("id");
+            changeStatus(userId, "Approved");
+          });
+          // Attach click event to the action buttons
+          $(".change-status-disapprove").on("click", function () {
+            const userId = $(this).data("id");
+            changeStatus(userId, "Rejected");
+          });
+        }
+
+        // Render pagination controls
+        function renderPagination() {
+          const pagination = $("#pagination");
+          pagination.empty();
+
+          const totalPages = Math.ceil(accountants.length / rowsPerPage);
+
+          for (let i = 1; i <= totalPages; i++) {
+            const button = `<button class="btn btn-sm ${
+              i === currentPage ? "btn-primary" : "btn-secondary"
+            } mx-1 page-btn" data-page="${i}">${i}</button>`;
+            pagination.append(button);
+          }
+
+          // Attach click event to pagination buttons
+          $(".page-btn").on("click", function () {
+            currentPage = parseInt($(this).data("page"));
+            renderTable();
+            renderPagination();
+          });
+        }
+
+        // Function to change the status of a user
+        function changeStatus(userId, newStatus) {
+          const actionCell = $(`#action-${userId}`);
+          const originalButtons = actionCell.html();
+          actionCell.html('<span class="loading-text">Loading...</span>');
+          $.ajax({
+            url: `/api/${role}/approve-accountant`,
+            method: "POST",
+            contentType: "application/json",
+            data: JSON.stringify({
+              user_id: userId,
+              status: newStatus,
+              tenant_id: tenant_id,
+            }),
+            beforeSend: function (xhr) {
+              xhr.setRequestHeader(
+                "Authorization",
+                `Bearer ${localStorage.getItem("auth_token")}`
+              );
+            },
+            success: function (response) {
+              if (response?.status) {
+                showNotification("success", response?.message);
+                const statusCell = $(`#row-${userId} td:nth-child(5)`);
+                statusCell
+                  .text(newStatus) // Update the text
+                  .removeClass("text-warning text-danger text-success") // Remove existing classes
+                  .addClass(
+                    newStatus === "Pending"
+                      ? "text-warning"
+                      : newStatus === "Rejected"
+                      ? "text-danger"
+                      : "text-success"
+                  );
+                const userIndex = accountants.findIndex(
+                  (accountant) => accountant.user_id === userId
+                );
+                if (userIndex !== -1) {
+                  accountants[userIndex].status = newStatus; // Update the status
+                }
+
+                actionCell.html("");
+                renderTable();
+              } else {
+                showNotification(
+                  "danger",
+                  response.message || "An error occurred."
+                );
+                actionCell.html(originalButtons);
+              }
+            },
+            error: function (xhr, status, error) {
+              showNotification(
+                "danger",
+                xhr.responseJSON?.message || "Error: " + error
+              );
+              actionCell.html(originalButtons);
+            },
+          });
+        }
+
+        // Initial Fetch Call
+        fetchAccountantData();
+      });
+
+      // Function to show notification
+      function showNotification(type, message) {
+        const notificationArea = $("#notificationArea");
+        notificationArea
+          .removeClass()
+          .addClass(`alert alert-${type}`)
+          .text(message)
+          .fadeIn();
+
+        // Automatically hide after 3 seconds
+        setTimeout(() => {
+          notificationArea.fadeOut();
+        }, 3000);
+      }
+    </script>
+  </body>
+</html>

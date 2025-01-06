@@ -11,9 +11,15 @@ const createRfpsValidator = Joi.object({
       "number.greater": getMessage("rfps.quantityGreaterThanZero"),
       "any.required": getMessage("rfps.quantityRequired"),
     }),
-  last_date: Joi.date().min("now").required(),
-  minimum_price: Joi.number().required(),
+  last_date: Joi.date()
+    .min("now")
+    .required()
+    .messages({
+      "date.min": getMessage("rfps.greatewrdatecurrent"),
+    }),
+  minimum_price: Joi.number().greater(0).required(),
   maximum_price: Joi.number()
+    .greater(0)
     .required()
     .custom((value, helpers) => {
       const { minimum_price } = helpers.state.ancestors[0];

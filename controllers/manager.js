@@ -9,9 +9,10 @@ const Users = db.Users;
 // This method is used to get the managers
 const getManagers = async (req, res) => {
   try {
+    await new Promise((resolve) => setTimeout(resolve, 3000));
     const { tenant_id } = req.query;
     const managers = await Users.findAll({
-      attributes: ["id", "name", "email", "mobile", 'status'],
+      attributes: ["id", "name", "email", "mobile", "status"],
       where: {
         roles: "manager",
         tenant_id: tenant_id,
@@ -41,6 +42,7 @@ const getManagers = async (req, res) => {
 // This method is used to approve the manager
 const approveManager = async (req, res) => {
   try {
+    await new Promise((resolve) => setTimeout(resolve, 3000));
     const { error, value } = approveUserStatusValidator.validate(req.body);
     if (error) {
       return res.status(400).json({

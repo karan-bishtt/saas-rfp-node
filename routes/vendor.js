@@ -4,7 +4,7 @@ const router = express.Router();
 // Importing RFP controller functions
 const { getRfpVendor, applyRfp } = require("../controllers/rfpVendors");
 
-router.get("/get-rfp", getRfpVendor);
+router.get("/rfp-request", getRfpVendor);
 
 // Apply for an RFP (vendor access required)
 router.post("/apply-rfp", applyRfp);

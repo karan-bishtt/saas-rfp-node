@@ -8,7 +8,7 @@ const {
 const { createAuditLog } = require("../helpers/audit_log");
 const Categories = db.Category; // Destructure Category model from db object
 const Tenants = db.Tenants; // Destructure Tenants model from db object
-
+const VendorDetails = db.VendorDetails; // Destructure VendorDetails model from db object
 // This method is used to fetch, create, update, and delete categories
 const categoriesMethod = async (req, res) => {
   const { id, tenant_id } = req.query; // Extract ID from request parameters
@@ -163,11 +163,29 @@ const categoriesMethod = async (req, res) => {
           message: getMessage("category.invalidId"),
         });
       }
-      const category = await Categories.findOne({ where: { id, tenant_id } });
+      const category = await Categories.findOne({
+        where: { id, tenant_id },
+        include: [
+          {
+            model: VendorDetails,
+            as: "vendors", // Use the alias defined in the association
+            attributes: ["id"], // Only fetch the `id` to minimize data load
+          },
+        ],
+      });
+
       if (!category) {
         return res.status(400).json({
           status: false,
           message: getMessage("category.notFound"),
+        });
+      }
+
+      // Check if the category is linked to any vendordetails
+      if (category.vendors && category.vendors.length > 0) {
+        return res.status(400).json({
+          status: false,
+          message: getMessage("category.cannotDelete"),
         });
       }
 

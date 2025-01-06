@@ -7,11 +7,17 @@ const { ROLES, USERSTATUS } = require("../helpers/constant");
 const Users = db.Users;
 const AccountantDetails = db.Accountant;
 
+/**
+ * This method is used to get the list of accountants
+ * @param {object} req
+ * @param {object} res
+ */
 const getAccountant = async (req, res) => {
   try {
+    await new Promise((resolve) => setTimeout(resolve, 3000));
     const { tenant_id } = req.query;
     const accountants = await Users.findAll({
-      attributes: ["id", "name", "email", "mobile"],
+      attributes: ["id", "name", "email", "mobile", "status"],
       include: [
         {
           model: AccountantDetails,
@@ -29,7 +35,7 @@ const getAccountant = async (req, res) => {
         name: accountant.name,
         email: accountant.email,
         mobile: accountant.mobile,
-        licence_number: accountant.accountants[0].licence_number,
+        licence_number: accountant?.accountants[0]?.licence_number,
         user_id: accountant.id, // This seems redundant as 'id' is already listed, assuming you might want something else here
         status: accountant.status,
       };
@@ -47,9 +53,14 @@ const getAccountant = async (req, res) => {
   }
 };
 
-// This method is used to approve the accountant
+/**
+ * This method is used to  approve the accountants
+ * @param {object} req
+ * @param {object} res
+ */
 const approveAccountant = async (req, res) => {
   try {
+    await new Promise((resolve) => setTimeout(resolve, 3000));
     const { error, value } = approveUserStatusValidator.validate(req.body);
     if (error) {
       return res.status(400).json({

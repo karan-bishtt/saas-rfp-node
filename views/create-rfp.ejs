@@ -1,0 +1,381 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Create RFP</title>
+
+    <!-- Include CSS and other dependencies -->
+    <%- include('partials/base.ejs') %>
+  </head>
+  <body data-sidebar="dark">
+    <!-- Include Header -->
+    <%- include('partials/headers.ejs') %>
+
+    <!-- Include Sidebar -->
+    <%- include('partials/sidebars.ejs') %>
+
+    <!-- Main Content Starts Here -->
+    <div id="notificationArea" class="alert d-none"></div>
+    <div class="main-content">
+      <div class="container">
+        <div class="row">
+          <div class="col">
+            <h1 class="mb-5">Create RFP</h1>
+            <form id="createRfpForm">
+              <!-- Item Name -->
+              <div class="form-group">
+                <label for="itemName">Item Name*</label>
+                <input
+                  type="text"
+                  id="itemName"
+                  name="item_name"
+                  class="form-control"
+                  placeholder="Enter item name"
+                  required
+                />
+                <span id="error_itemName" class="text-danger"></span>
+              </div>
+
+              <!-- Item Description -->
+              <div class="form-group">
+                <label for="itemDescription">Item Description*</label>
+                <textarea
+                  id="itemDescription"
+                  name="item_description"
+                  class="form-control"
+                  placeholder="Enter item description"
+                  rows="3"
+                  required
+                ></textarea>
+                <span id="error_itemDescription" class="text-danger"></span>
+              </div>
+
+              <!-- Quantity -->
+              <div class="form-group">
+                <label for="quantity">Quantity*</label>
+                <input
+                  type="number"
+                  id="quantity"
+                  name="quantity"
+                  class="form-control"
+                  placeholder="Enter quantity"
+                  required
+                />
+                <span id="error_quantity" class="text-danger"></span>
+              </div>
+
+              <!-- Last Date -->
+              <div class="form-group">
+                <label for="lastDate">Last Date*</label>
+                <input
+                  type="date"
+                  id="lastDate"
+                  name="last_date"
+                  class="form-control"
+                  required
+                />
+                <span id="error_lastDate" class="text-danger"></span>
+              </div>
+
+              <!-- Minimum Price -->
+              <div class="form-group">
+                <label for="minimumPrice">Minimum Price*</label>
+                <input
+                  type="number"
+                  step="0.01"
+                  id="minimumPrice"
+                  name="minimum_price"
+                  class="form-control"
+                  placeholder="Enter minimum price"
+                  required
+                />
+                <span id="error_minimumPrice" class="text-danger"></span>
+              </div>
+
+              <!-- Maximum Price -->
+              <div class="form-group">
+                <label for="maximumPrice">Maximum Price*</label>
+                <input
+                  type="number"
+                  step="0.01"
+                  id="maximumPrice"
+                  name="maximum_price"
+                  class="form-control"
+                  placeholder="Enter maximum price"
+                  required
+                />
+                <span id="error_maximumPrice" class="text-danger"></span>
+              </div>
+
+              <!-- Category Name -->
+              <div class="form-group">
+                <label for="category">Category Name*</label>
+                <select
+                  class="form-control"
+                  name="category"
+                  id="category"
+                  required
+                >
+                  <option value="">Select Category</option>
+                </select>
+                <span id="error_category" class="text-danger"></span>
+              </div>
+
+              <!-- Vendors -->
+              <div class="form-group">
+                <label for="vendors">Vendor*</label>
+                <select
+                  class="form-control"
+                  name="vendors"
+                  id="vendors"
+                  multiple
+                  required
+                >
+                  <option value="">Select Categories First</option>
+                </select>
+                <span id="error_vendors" class="text-danger"></span>
+              </div>
+
+              <!-- Submit Button -->
+              <button type="submit" class="btn btn-primary">Create RFP</button>
+            </form>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Include Footer -->
+    <%- include('partials/footer.ejs') %>
+
+    <script>
+      $(document).ready(function () {
+        const tenant_id = "<%= user.tenant_id %>";
+        const role = "<%= user.roles %>";
+        const createRfpForm = $("#createRfpForm");
+        const notificationArea = $("#notificationArea");
+
+        fetchCategories(tenant_id);
+
+        // Submit RFP Form
+        createRfpForm.on("submit", function (e) {
+          e.preventDefault(); // Prevent default form submission
+
+          const formData = {
+            tenant_id: tenant_id,
+            item_name: $("#itemName").val(),
+            item_description: $("#itemDescription").val(),
+            quantity: $("#quantity").val(),
+            last_date: $("#lastDate").val(),
+            minimum_price: $("#minimumPrice").val(),
+            maximum_price: $("#maximumPrice").val(),
+            category: $("#category").val(),
+            vendors: $("#vendors").val(),
+          };
+
+          // Clear previous error messages
+          $(".text-danger").text("");
+
+          // Basic client-side validation
+          let hasError = false;
+
+          for (const [key, value] of Object.entries(formData)) {
+            // Check if value is an array and ensure it has elements
+            if (Array.isArray(value) && value.length === 0) {
+              $(`#error_${key}`).text(`${key.replace("_", " ")} is required.`);
+              hasError = true;
+            }
+            // Check if value is a number or string and ensure it's not empty
+            else if (
+              (typeof value === "string" && !value.trim()) ||
+              (typeof value === "number" && isNaN(value))
+            ) {
+              if (key === "tenant_id") {
+                $(`#error_${key}`).text("Company is required.");
+              } else {
+                $(`#error_${key}`).text(
+                  `${key.replace("_", " ")} is required.`
+                );
+              }
+              hasError = true;
+            }
+          }
+
+          if (hasError) return;
+
+          // AJAX call to create RFP
+          $.ajax({
+            url: `/api/${role}/create-rfp`,
+            method: "POST",
+            contentType: "application/json",
+            data: JSON.stringify(formData),
+            beforeSend: function (xhr) {
+              xhr.setRequestHeader(
+                "Authorization",
+                `Bearer ${localStorage.getItem("auth_token")}`
+              );
+              notificationArea
+                .removeClass()
+                .addClass("alert alert-info")
+                .text("Submitting RFP...")
+                .fadeIn();
+            },
+            success: function (response) {
+              if (response.status) {
+                notificationArea
+                  .removeClass()
+                  .addClass("alert alert-success")
+                  .text(response.message || "RFP created successfully.")
+                  .fadeIn();
+                createRfpForm[0].reset(); // Reset form fields
+              } else {
+                notificationArea
+                  .removeClass()
+                  .addClass("alert alert-danger")
+                  .text(response.message || "An error occurred.")
+                  .fadeIn();
+              }
+            },
+            error: function (xhr, status, error) {
+              notificationArea
+                .removeClass()
+                .addClass("alert alert-danger")
+                .text(xhr.responseJSON?.message || "Error: " + error)
+                .fadeIn();
+            },
+          });
+        });
+
+        // Handle tenant selection change
+        $("#category").change(function () {
+          const categoryId = $(this).val();
+
+          if (categoryId) {
+            // Fetch categories based on selected tenant
+            fetchVendors(categoryId);
+          } else {
+            // Clear category field if no tenant is selected
+            clearVendorField();
+          }
+        });
+
+        /**
+         * Clears the category field
+         */
+        function clearCategoryField() {
+          const vendorFields = $("#vendors");
+          vendorFields.find("option").remove();
+          vendorFields.append(
+            '<option value="">Select a Category first</option>'
+          );
+          vendorFields.prop("disabled", true);
+        }
+        /**
+         * Fetches vendors for the selected category
+         * @param {string} category id
+         */
+        function fetchVendors(categoryId) {
+          const vendorField = $("#vendors");
+          $.ajax({
+            url: `/api/${role}/vendor-list?category_id=${categoryId}&tenant_id=${tenant_id}`,
+            type: "GET",
+            beforeSend: function (xhr) {
+              xhr.setRequestHeader(
+                "Authorization",
+                `Bearer ${localStorage.getItem("auth_token")}`
+              );
+              // Disable category field and show loading
+              vendorField.prop("disabled", true);
+              vendorField.html('<option value="">Loading Vendors...</option>');
+            },
+            success: function (response) {
+              if (
+                response?.status &&
+                response?.data?.vendors &&
+                Object.keys(response.data.vendors)?.length > 0
+              ) {
+                // Clear existing options
+                vendorField.find("option").remove();
+
+                Object.values(response.data.vendors).forEach((vendor) => {
+                  vendorField.append(
+                    `<option value="${vendor.user_id}">${vendor.name}</option>`
+                  );
+                });
+                vendorField.prop("disabled", false);
+              } else {
+                // Show no data message
+                vendorField.find("option").remove();
+                vendorField.append(
+                  '<option value="">No Vendors available</option>'
+                );
+                vendorField.prop("disabled", true);
+              }
+            },
+            error: function () {
+              vendorField.find("option").remove();
+              vendorField.append(
+                '<option value="">An error occurred. Please try again.</option>'
+              );
+              vendorField.prop("disabled", true);
+            },
+          });
+        }
+
+        /**
+         * Fetches categories for the selected tenant
+         * @param {string} tenantId
+         */
+        function fetchCategories(tenant_id) {
+          const categoryField = $("#category");
+          $.ajax({
+            url: `/api/category?tenant_id=${tenant_id}`, // Replace with your actual API endpoint
+            type: "GET",
+            beforeSend: function () {
+              // Disable category field and show loading
+              categoryField.prop("disabled", true);
+              categoryField.html(
+                '<option value="">Loading categories...</option>'
+              );
+            },
+            success: function (response) {
+              if (
+                response.status &&
+                response?.data?.categories &&
+                Object.keys(response.data.categories)?.length > 0
+              ) {
+                // Clear existing options
+                categoryField.find("option").remove();
+                // Add default option
+                categoryField.append(
+                  '<option value="">Select Category</option>'
+                );
+
+                Object.values(response.data.categories).forEach((category) => {
+                  categoryField.append(
+                    `<option value="${category.id}">${category.name}</option>`
+                  );
+                });
+                categoryField.prop("disabled", false);
+              } else {
+                // Show no data message
+                categoryField.find("option").remove();
+                categoryField.append(
+                  '<option value="">No categories available</option>'
+                );
+                categoryField.prop("disabled", true);
+              }
+            },
+            error: function () {
+              categoryField.find("option").remove();
+              categoryField.append(
+                '<option value="">An error occurred. Please try again.</option>'
+              );
+              categoryField.prop("disabled", true);
+            },
+          });
+        }
+      });
+    </script>
+  </body>
+</html>

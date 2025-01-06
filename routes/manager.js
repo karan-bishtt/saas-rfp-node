@@ -5,36 +5,35 @@ const router = express.Router();
 const { getVendors, getVendorsInExcel } = require("../controllers/vendors");
 
 // Importing RFP controller functions
-const { getRfp, getRfpQuotes } = require("../controllers/rfps");
+const {
+  getRfp,
+  getRfpQuotes,
+  createRfp,
+  closeRfp,
+} = require("../controllers/rfps");
 
 // Importing category controller functions
 const {
   categoriesMethod,
   uploadCategoriesFromExcel,
 } = require("../controllers/category");
+const { formDataMiddleware } = require("../middleware/multer");
 
-// Get list of vendors
+// Vendors route
 router.get("/vendor-list", getVendors);
-
-// Get list of vendors
 router.get("/vendor-excel", getVendorsInExcel);
 
-// View RFP
+// RFP routes
+router.post("/create-rfp", createRfp);
 router.get("/view-rfp", getRfp);
-
-// View quotes for an RFP
+router.put("/close-rfp", closeRfp);
 router.get("/get-quotes", getRfpQuotes);
 
-// Get all categories
+// Categories route
 router.get("/categories", categoriesMethod);
-// Change category name
-router.put("/change-category-name", categoriesMethod);
-// Add a new category
 router.post("/add-category", categoriesMethod);
-// Delete a category
+router.post("/upload-category", formDataMiddleware, uploadCategoriesFromExcel);
+router.put("/change-category-name", categoriesMethod);
 router.delete("/delete-category", categoriesMethod);
-
-// Add a new category
-router.post("/upload-category", uploadCategoriesFromExcel);
 
 module.exports = router;

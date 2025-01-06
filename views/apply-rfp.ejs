@@ -1,0 +1,233 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Apply for RFP</title>
+
+    <!-- Include CSS and other dependencies -->
+    <%- include('partials/base.ejs') %>
+  </head>
+  <body data-sidebar="dark">
+    <!-- Include Header -->
+    <%- include('partials/headers.ejs') %>
+
+    <!-- Include Sidebar -->
+    <%- include('partials/sidebars.ejs') %>
+
+    <!-- Main Content Starts Here -->
+    <div id="notificationArea" class="alert d-none"></div>
+    <div class="main-content">
+      <div class="container">
+        <div class="row">
+          <div class="col">
+            <h1 class="mb-5">Apply for RFP</h1>
+            <form id="applyRfpForm">
+              <!-- Name -->
+              <div class="form-group">
+                <label for="itemName">Item Name</label>
+                <input
+                  type="text"
+                  step="0.01"
+                  id="itemName"
+                  name="item_name"
+                  class="form-control"
+                  disabled
+                />
+                <span id="error_itemName" class="text-danger"></span>
+              </div>
+
+              <!-- Description -->
+              <div class="form-group">
+                <label for="itemDescription">Item Description</label>
+                <input
+                  type="text"
+                  step="0.01"
+                  id="itemDescription"
+                  name="item_description"
+                  class="form-control"
+                  disabled
+                />
+                <span id="error_itemDescription" class="text-danger"></span>
+              </div>
+
+              <!-- Item Price -->
+              <div class="form-group">
+                <label for="itemMinPrice">Min Price</label>
+                <input
+                  type="number"
+                  step="0.01"
+                  id="itemMinPrice"
+                  name="item_min_price"
+                  class="form-control"
+                  disabled
+                />
+                <span id="error_itemMinPrice" class="text-danger"></span>
+              </div>
+
+              <!-- Item Price -->
+              <div class="form-group">
+                <label for="itemMaxPrice">Max Price</label>
+                <input
+                  type="number"
+                  step="0.01"
+                  id="itemMaxPrice"
+                  name="item_max_price"
+                  class="form-control"
+                  disabled
+                />
+                <span id="error_itemMaxPrice" class="text-danger"></span>
+              </div>
+
+              <!-- Item Quantity -->
+              <div class="form-group">
+                <label for="itemQuantity">Quantity</label>
+                <input
+                  type="number"
+                  step="0.01"
+                  id="itemQuantity"
+                  name="item_quantity"
+                  class="form-control"
+                  disabled
+                />
+                <span id="error_itemQuantity" class="text-danger"></span>
+              </div>
+
+              <!-- Item Price -->
+              <div class="form-group">
+                <label for="itemPrice">Item Price*</label>
+                <input
+                  type="number"
+                  step="0.01"
+                  id="itemPrice"
+                  name="item_price"
+                  class="form-control"
+                  placeholder="Enter item price"
+                  required
+                />
+                <span id="error_itemPrice" class="text-danger"></span>
+              </div>
+
+              <!-- Total Cost -->
+              <div class="form-group">
+                <label for="totalCost">Total Cost*</label>
+                <input
+                  type="number"
+                  step="0.01"
+                  id="totalCost"
+                  name="total_cost"
+                  class="form-control"
+                  placeholder="Enter total cost"
+                  required
+                />
+                <span id="error_totalCost" class="text-danger"></span>
+              </div>
+
+              <!-- Submit Button -->
+              <button type="submit" class="btn btn-primary">
+                Apply for RFP
+              </button>
+            </form>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Include Footer -->
+    <%- include('partials/footer.ejs') %>
+
+    <script>
+      $(document).ready(function () {
+        const tenant_id = "<%= user.tenant_id %>";
+        const role = "<%= user.roles %>";
+        const rfp_id = "<%= rfp.id %>";
+        const max_price = "<%= rfp.max_price %>";
+        const min_price = "<%= rfp.min_price %>";
+        const quantity = "<%= rfp.quantity %>";
+        const name = "<%= rfp.name %>";
+        const description = "<%= rfp.description %>";
+        const applyRfpForm = $("#applyRfpForm");
+        const notificationArea = $("#notificationArea");
+
+        // Set RFP details
+        $("#itemName").val(name);
+        $("#itemDescription").val(description);
+        $("#itemMinPrice").val(min_price);
+        $("#itemMaxPrice").val(max_price);
+        $("#itemQuantity").val(quantity);
+
+        // Submit RFP Form
+        applyRfpForm.on("submit", function (e) {
+          e.preventDefault(); // Prevent default form submission
+          const formData = {
+            tenant_id: tenant_id,
+            rfp_id: rfp_id,
+            item_price: parseFloat($("#itemPrice").val()),
+            total_cost: parseFloat($("#totalCost").val()),
+          };
+
+          // Clear previous error messages
+          $(".text-danger").text("");
+
+          // Basic client-side validation
+          let hasError = false;
+
+          for (const [key, value] of Object.entries(formData)) {
+            if (!value || isNaN(value)) {
+              $(`#error_${key}`).text(`${key.replace("_", " ")} is required.`);
+              hasError = true;
+            }
+          }
+
+          if (hasError) return;
+
+          // AJAX call to apply for RFP
+          $.ajax({
+            url: `/api/${role}/apply-rfp`,
+            method: "POST",
+            contentType: "application/json",
+            data: JSON.stringify(formData),
+            beforeSend: function (xhr) {
+              xhr.setRequestHeader(
+                "Authorization",
+                `Bearer ${localStorage.getItem("auth_token")}`
+              );
+              notificationArea
+                .removeClass()
+                .addClass("alert alert-info")
+                .text("Submitting your application...")
+                .fadeIn();
+            },
+            success: function (response) {
+              if (response.status) {
+                notificationArea
+                  .removeClass()
+                  .addClass("alert alert-success")
+                  .text(
+                    response.message || "Application submitted successfully."
+                  )
+                  .fadeIn();
+                setTimeout(() => {
+                  window.location.href = `/${role}/rfp-request`;
+                }, 1000);
+              } else {
+                notificationArea
+                  .removeClass()
+                  .addClass("alert alert-danger")
+                  .text(response.message || "An error occurred.")
+                  .fadeIn();
+              }
+            },
+            error: function (xhr, status, error) {
+              notificationArea
+                .removeClass()
+                .addClass("alert alert-danger")
+                .text(xhr.responseJSON?.message || "Error: " + error)
+                .fadeIn();
+            },
+          });
+        });
+      });
+    </script>
+  </body>
+</html>

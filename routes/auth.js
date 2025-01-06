@@ -24,10 +24,6 @@ router.post("/register-admin", registerAdmin);
 router.post("/register-manager", registerManager);
 router.post("/register-accountant", registerAccount);
 router.post("/register-vendor", registerVendor);
-
-// User login
-router.post("/login", login);
-
 // Get category (public access)
 router.get("/category", categoriesMethod);
 
@@ -40,5 +36,8 @@ router.post("/forgot-password", forgetPassword);
 
 // Get tenants (public access)
 router.get("/tenants", getTenants);
+
+// User login
+router.post("/login", login);
 
 module.exports = router;
