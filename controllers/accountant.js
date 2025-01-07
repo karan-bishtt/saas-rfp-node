@@ -14,7 +14,6 @@ const AccountantDetails = db.Accountant;
  */
 const getAccountant = async (req, res) => {
   try {
-    await new Promise((resolve) => setTimeout(resolve, 3000));
     const { tenant_id } = req.query;
     const accountants = await Users.findAll({
       attributes: ["id", "name", "email", "mobile", "status"],
@@ -60,7 +59,6 @@ const getAccountant = async (req, res) => {
  */
 const approveAccountant = async (req, res) => {
   try {
-    await new Promise((resolve) => setTimeout(resolve, 3000));
     const { error, value } = approveUserStatusValidator.validate(req.body);
     if (error) {
       return res.status(400).json({

@@ -23,11 +23,13 @@
           <div class="col">
             <div class="d-flex justify-content-between align-items-center">
               <h1 class="mb-5">RFP List</h1>
+              <% if (['admin', 'manager'].includes(user.roles)) { %>
               <div>
                 <a href="<%= `/${user.roles}/create-rfp` %>" class="text-muted">
                   <i class="mdi mdi-pencil"></i> Create RFP
                 </a>
               </div>
+              <% } %>
             </div>
             <!-- Loading Indicator -->
             <div class="loading-indicator" id="loadingIndicator">
@@ -203,7 +205,6 @@
           });
         }
 
-        // Change RFP status
         function closeRfp(rfpId) {
           const actionCell = $(`#action-${rfpId}`);
           const originalButton = actionCell.html(); // Save the original button HTML
@@ -228,22 +229,15 @@
             success: function (response) {
               if (response?.status) {
                 showNotification("success", response.message);
-
-                // Update the RFP status in the local list
-                const rfpIndex = rfps.findIndex((rfp) => rfp.id === rfpId);
-                if (rfpIndex !== -1) {
-                  rfps[rfpIndex].status = newStatus;
-                }
-
-                // Re-render the table
-                renderTable();
+                // Re-render the table to reflect the updated status
+                fetchRfpData();
               } else {
                 // Show error notification and re-render the button
                 showNotification(
                   "danger",
                   response.message || "Error occurred"
                 );
-                actionCell.html(originalButton);
+                actionCell.html(originalButton); // Revert to the original button
               }
             },
             error: function (xhr, status, error) {
@@ -252,7 +246,7 @@
                 "danger",
                 xhr.responseJSON?.message || "Error: " + error
               );
-              actionCell.html(originalButton);
+              actionCell.html(originalButton); // Revert to the original button
             },
           });
         }

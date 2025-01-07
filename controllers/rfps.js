@@ -176,7 +176,7 @@ const closeRfp = async (req, res) => {
       status: true,
       message: getMessage("rfps.closeRfpSuccessfully").replace(
         "{}",
-        valid_rfp.name
+        valid_rfp.item_name
       ),
     });
   } catch (error) {
