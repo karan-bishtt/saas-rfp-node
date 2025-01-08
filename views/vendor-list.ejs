@@ -147,7 +147,9 @@
               <button class="btn btn-sm btn-primary change-status-approve" data-id="${vendor.user_id}">Approve</button>
               <button class="btn btn-sm btn-danger change-status-disapprove" data-id="${vendor.user_id}">Reject</button>
             `
-                : "";
+                : vendor.status === "Rejected"
+                ? ` <button class="btn btn-sm btn-primary change-status-approve" data-id="${vendor.user_id}">Approve</button>`
+                : `<button class="btn btn-sm btn-danger change-status-disapprove" data-id="${vendor.user_id}">Reject</button>`;
             const categoryTags = vendor.category
               .map((cat) => `<span class="badge badge-info">${cat.name}</span>`)
               .join(" "); // Generate tags and join them with a space

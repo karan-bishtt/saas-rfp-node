@@ -138,8 +138,8 @@
                 <td>${quote.name}</td>
                 <td>${quote.email}</td>
                 <td>${quote.mobile}</td>
-                <td>${quote.item_price}</td>
-                <td>${quote.total_cost}</td>
+                <td>${quote.item_price || "-"}</td>
+                <td>${quote.total_cost || "-"}</td>
                 <td class=${statusClass}>${quote.status}</td>
               </tr>
             `;

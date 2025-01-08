@@ -1,6 +1,6 @@
 const db = require("../models/index");
 const { getMessage } = require("../lang");
-const { ROLES } = require("../helpers/constant");
+const { ROLES, TENANT_STATUS } = require("../helpers/constant");
 const Users = db.Users;
 
 const adminTenantVerification = async (req, res, next) => {
@@ -16,6 +16,11 @@ const adminTenantVerification = async (req, res, next) => {
     return res.status(401).json({
       status: false,
       message: getMessage("auth.unauthorized"),
+    });
+  } else if (admin?.tenant?.status === TENANT_STATUS.closed) {
+    return res.status(401).json({
+      status: false,
+      message: getMessage("auth.tenantClosed"),
     });
   }
   next();
@@ -35,6 +40,11 @@ const vendorTenantVerification = async (req, res, next) => {
       status: false,
       message: getMessage("auth.unauthorized"),
     });
+  } else if (vendor?.tenant?.status === TENANT_STATUS.closed) {
+    return res.status(401).json({
+      status: false,
+      message: getMessage("auth.tenantClosed"),
+    });
   }
   next();
 };
@@ -53,6 +63,11 @@ const managerTenantVerification = async (req, res, next) => {
       status: false,
       message: getMessage("auth.unauthorized"),
     });
+  } else if (manager?.tenant?.status === TENANT_STATUS.closed) {
+    return res.status(401).json({
+      status: false,
+      message: getMessage("auth.tenantClosed"),
+    });
   }
   next();
 };
@@ -70,6 +85,11 @@ const accountantTenantVerification = async (req, res, next) => {
     return res.status(401).json({
       status: false,
       message: getMessage("auth.unauthorized"),
+    });
+  } else if (accountant?.tenant?.status === TENANT_STATUS.closed) {
+    return res.status(401).json({
+      status: false,
+      message: getMessage("auth.tenantClosed"),
     });
   }
   next();

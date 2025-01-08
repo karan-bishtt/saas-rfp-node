@@ -97,13 +97,7 @@ app.use(
 // API ROUTES ----------------------
 app.use("/api/admin", verifyToken, adminTenantVerification, AdminRoute);
 
-app.use(
-  "/api/manager",
-  verifyToken,
-  formDataMiddleware,
-  managerTenantVerification,
-  managerRoute
-);
+app.use("/api/manager", verifyToken, managerTenantVerification, managerRoute);
 
 app.use(
   "/api/accountant",
@@ -135,10 +129,7 @@ app.use("/", nonAuthenticateRoutes, publicRoutes);
 
 // Error Handler --------------------------------------------
 app.use((err, req, res, next) => {
-  console.error(err.stack);
-  res
-    .status(400)
-    .json({ status: false, message: getMessage("error.somethingWentWrong") });
+  return res.redirect("/");
 });
 
 // Port -----------------------------------------------------

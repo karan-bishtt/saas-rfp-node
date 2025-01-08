@@ -68,6 +68,7 @@ const getRfpVendor = async (req, res) => {
           item_price: rfpVendor.item_price || null,
           total_cost: rfpVendor.total_cost || null,
           status: rfpVendor.status || null,
+          rfp_status: rfp?.status || "open",
         };
       }),
     };

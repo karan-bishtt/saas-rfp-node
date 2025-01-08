@@ -4,7 +4,7 @@ const router = express.Router();
 // Importing vendor admin controller functions
 const {
   getVendors,
-  approveVendor,
+  vendorStatusChange,
   getVendorsInExcel,
 } = require("../controllers/vendors");
 
@@ -20,7 +20,7 @@ router.get("/categories", categoriesMethod);
 // Vendors route
 router.get("/vendor-list", getVendors);
 router.get("/vendor-excel", getVendorsInExcel);
-router.post("/approve-vendor", approveVendor);
+router.post("/approve-vendor", vendorStatusChange);
 
 // View RFP
 router.get("/view-rfp", getRfp);

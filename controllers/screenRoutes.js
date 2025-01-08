@@ -155,7 +155,10 @@ const applyRfpScreen = (action) => {
 
       // Redirect based on RFP status
       const rfpStatus = rfpVendor.rfp.status;
-      if (rfpStatus === "applied" || rfpStatus !== "open") {
+      if (
+        (rfpStatus === "applied" || rfpStatus !== "open") &&
+        action === "apply"
+      ) {
         return res.redirect(`/${user.roles}/rfp-request`);
       }
 
@@ -169,6 +172,7 @@ const applyRfpScreen = (action) => {
           min_price: rfpVendor.rfp.minimum_price,
           name: rfpVendor.rfp.item_name,
           description: rfpVendor.rfp.item_description,
+          rfp_status: rfpVendor.rfp.status,
           quantity: rfpVendor.rfp.quantity,
           last_date: rfpVendor.rfp.last_date,
           item_price: rfpVendor.item_price || null,

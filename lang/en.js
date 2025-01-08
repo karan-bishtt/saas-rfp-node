@@ -36,6 +36,12 @@ module.exports = {
     unauthorized: "Unauthorized",
     failedLogout: "Failed to logout",
     logout: "Logout successfully",
+    panCardInvalid: "Pancard number must be in the format ABCDE1234F",
+    gstCardInvalid:
+      "GST number must be a valid 15-character alphanumeric code format: 27ABCDE1234F2Z6  ",
+    tenantClosed: "Company has been closed",
+    tenantNotFound: "Company not found",
+    tenantInactive: "Company is inactive",
   },
   category: {
     notFound: "Category not found",
@@ -62,6 +68,7 @@ module.exports = {
     approveFailed: "Failed to change vendor status",
     invalidRole: "Invalid vendor role",
     errorExcelGeneration: "Error generating excel",
+    alreadyRejected: "Vendor is already rejected",
   },
   manager: {
     errorFetchingmanagers: "Error fetching managers",
@@ -69,6 +76,7 @@ module.exports = {
     approveFailed: "Failed to change manager status",
     invalidRole: "Invalid manager role",
     alreadyApproved: "Manager is already approved",
+    alreadyRejected: "Manager is already rejected",
   },
   accountant: {
     errorFetchingAccountants: "Error fetching accountants",
@@ -76,6 +84,9 @@ module.exports = {
     approveFailed: "Failed to change accountant status",
     invalidRole: "Invalid accountant role",
     alreadyApproved: "Accountant is already approved",
+    alreadyRejected: "Accountant is already rejected",
+    licenseNoInvalid:
+      "License number must be 8-12 alphanumeric characters (uppercase letters and digits only).",
   },
   rfps: {
     fetchingrfpsData: "Error fetching rfps data",
@@ -116,6 +127,7 @@ module.exports = {
     approveFailed: "Failed to approve admin",
     sameStatusError: "Admin is already in the same status",
     alreadyApproved: "Admin is already approved",
+    alreadyRejected: "Admin is already rejected",
   },
   error: {
     somethingWentWrong: "Something went wrong",
@@ -132,5 +144,6 @@ module.exports = {
     invalidCategoryId: "Invalid category id",
     unautorized: "Unauthorized",
     failedToFetchData: "Failed to fetch data",
+    alreadyRejected: "Already rejected",
   },
 };

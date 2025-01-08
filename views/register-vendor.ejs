@@ -149,18 +149,15 @@
                       <!-- Phone Number -->
                       <div class="col-md-12 col-lg-6">
                         <div class="form-group">
-                          <label for="phone_number">Phone Number*</label>
+                          <label for="mobile">Phone Number*</label>
                           <input
-                            type="text"
+                            type="number"
                             class="form-control"
-                            name="phone_number"
-                            id="phone_number"
+                            name="mobile"
+                            id="mobile"
                             placeholder="Enter Phone Number"
                           />
-                          <span
-                            id="error_phone_number"
-                            class="text-danger"
-                          ></span>
+                          <span id="error_mobile" class="text-danger"></span>
                         </div>
                       </div>
 
@@ -197,7 +194,7 @@
                       <!-- Revenue No -->
                       <div class="col-md-12 col-lg-6">
                         <div class="form-group">
-                          <label for="revenue">Revenue No*</label>
+                          <label for="revenue">Revenue*</label>
                           <input
                             type="text"
                             class="form-control"
@@ -329,7 +326,7 @@
             lastname: $("#lastname").val(),
             category: $("#category").val(),
             email: $("#email").val(),
-            mobile: $("#phone_number").val(),
+            mobile: $("#mobile").val(),
             address: $("#address").val(),
             gst_no: $("#gst_no").val(),
             revenue: $("#revenue").val(),
@@ -356,6 +353,10 @@
             ) {
               if (key === "tenant_id") {
                 $(`#error_${key}`).text("Company is required.");
+              } else if (key == "mobile") {
+                $(`#error_${key}`).text(`Phone number is required.`);
+              } else if (key == "no_of_employees") {
+                $(`#error_${key}`).text(`No of Employee is required.`);
               } else {
                 $(`#error_${key}`).text(
                   `${key.replace("_", " ")} is required.`

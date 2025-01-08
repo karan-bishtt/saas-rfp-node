@@ -5,7 +5,12 @@ const bcrypt = require("bcryptjs");
 let db = require("../models/index");
 const { sendMails } = require("../helpers/mailer");
 const { getMessage } = require("../lang");
-const { ROLES, USERSTATUS, SUPERUSERTENANT } = require("../helpers/constant");
+const {
+  ROLES,
+  USERSTATUS,
+  SUPERUSERTENANT,
+  TENANT_STATUS,
+} = require("../helpers/constant");
 const { Op } = require("sequelize");
 
 const {
@@ -17,7 +22,10 @@ const {
   confirmPasswordValidator,
   loginValidator,
 } = require("../validators/auth");
-const { clearCookieToken, setCookieToken } = require("../middleware/CookieVerification");
+const {
+  clearCookieToken,
+  setCookieToken,
+} = require("../middleware/CookieVerification");
 let Users = db.Users;
 let VendorDetails = db.VendorDetails;
 let Accountant = db.Accountant;
@@ -70,6 +78,20 @@ const login = async (req, res) => {
           : getMessage("auth.rejectedRequest"),
       });
     }
+
+    const tenant = await Tenants.findOne({ where: { id: user.tenant_id } });
+    if (!tenant) {
+      return res.status(400).json({
+        status: false,
+        message: getMessage("auth.tenantIdNotExist"),
+      });
+    } else if (tenant.status === TENANT_STATUS.closed) {
+      return res.status(400).json({
+        status: false,
+        message: getMessage("auth.tenantInactive"),
+      });
+    }
+
     // generate token
     const token = await generateToken(user);
     const response = {
@@ -568,6 +590,7 @@ const getTenants = async (req, res) => {
   try {
     const tenant = await Tenants.findAll({
       where: {
+        status: TENANT_STATUS.active,
         name: {
           [Op.not]: SUPERUSERTENANT,
         },

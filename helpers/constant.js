@@ -35,6 +35,11 @@ const REGISTER_VENDOR_URL = "/register-vendor";
 const FORGOT_PASSWORD_URL = "/forgot-password";
 const CREATE_CATEGORY_URL = "/create-category";
 
+const TENANT_STATUS = {
+  active: "active",
+  closed: "closed",
+};
+
 module.exports = {
   ROLES,
   USERSTATUS,
@@ -48,4 +53,5 @@ module.exports = {
   REGISTER_VENDOR_URL,
   FORGOT_PASSWORD_URL,
   CREATE_CATEGORY_URL,
+  TENANT_STATUS,
 };

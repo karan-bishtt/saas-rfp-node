@@ -257,14 +257,21 @@ const uploadCategoriesFromExcel = async (req, res) => {
       });
     }
 
-    // Process categoriesToInsert as needed
-
-    // Bulk insert or update if already exists
-    await Categories.bulkCreate(categoriesToInsert, {
-      // Columns to update if duplicate is foundF
-      updateOnDuplicate: ["name"],
+    const existingCategories = await Categories.findAll({
+      where: {
+        name: categoriesToInsert.map((category) => category.name),
+        tenant_id,
+      },
     });
 
+    const newCategories = categoriesToInsert.filter(
+      (category) =>
+        !existingCategories.find((existing) => existing.name === category.name)
+    );
+
+    if (newCategories.length > 0) {
+      await Categories.bulkCreate(newCategories);
+    }
     // Log the creation
     createAuditLog({
       user_id: user.id,

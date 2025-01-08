@@ -133,18 +133,15 @@
                       <!-- Phone Number -->
                       <div class="col-md-12 col-lg-6">
                         <div class="form-group">
-                          <label for="phone_number">Phone Number*</label>
+                          <label for="mobile">Phone Number*</label>
                           <input
-                            type="text"
+                            type="number"
                             class="form-control"
-                            name="phone_number"
-                            id="phone_number"
+                            name="mobile"
+                            id="mobile"
                             placeholder="Enter Phone Number"
                           />
-                          <span
-                            id="error_phone_number"
-                            class="text-danger"
-                          ></span>
+                          <span id="error_mobile" class="text-danger"></span>
                         </div>
                       </div>
 
@@ -231,7 +228,7 @@
             firstname: $("#firstname").val(),
             lastname: $("#lastname").val(),
             email: $("#email").val(),
-            mobile: $("#phone_number").val(),
+            mobile: $("#mobile").val(),
             password: $("#password").val(),
             confirm_password: $("#confirm_password").val(),
             tenant_id: $("#tenant_id").val(),
@@ -241,9 +238,15 @@
 
           // Validate form fields
           for (const [key, value] of Object.entries(formData)) {
-            if (!value.trim() && key !== "last_name") {
+            if (
+              ((typeof value === "string" && !value.trim()) ||
+                (typeof value === "number" && isNaN(value))) &&
+              key !== "last_name"
+            ) {
               if (key === "tenant_id") {
                 $(`#error_${key}`).text("Company is required.");
+              } else if (key == "mobile") {
+                $(`#error_${key}`).text(`Phone number is required.`);
               } else {
                 $(`#error_${key}`).text(
                   `${key.replace("_", " ")} is required.`

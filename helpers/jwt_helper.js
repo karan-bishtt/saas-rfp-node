@@ -2,10 +2,10 @@ const jwt = require("jsonwebtoken");
 const createError = require("http-errors");
 const db = require("../models/index");
 const { getMessage } = require("../lang");
-const { USERSTATUS, ROLES } = require("./constant");
+const { USERSTATUS, ROLES, TENANT_STATUS } = require("./constant");
 const { clearCookieToken } = require("../middleware/CookieVerification");
 const Users = db.Users;
-
+const Tenants = db.Tenants;
 // This method is used to generate the token
 const generateToken = (user) => {
   return new Promise((resolve, reject) => {
@@ -78,7 +78,25 @@ const verifyToken = async (req, res, next) => {
           : getMessage("auth.rejectedRequest"),
       });
     }
+
+    const tenant = await Tenants.findOne({ where: { id: user.tenant_id } });
+    if (!tenant) {
+      // Clear the auth_token cookie
+      clearCookieToken(res);
+      return res.status(401).json({
+        status: false,
+        message: getMessage("auth.tenantNotFound"),
+      });
+    } else if (tenant.status == TENANT_STATUS.closed) {
+      // Clear the auth_token cookie
+      clearCookieToken(res);
+      return res.status(401).json({
+        status: false,
+        message: getMessage("auth.tenantClosed"),
+      });
+    }
     // Attach user information to the request for further use
+    user['tenant'] = tenant
     req.user = user;
     next();
   } catch (err) {

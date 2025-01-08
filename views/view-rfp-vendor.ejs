@@ -51,6 +51,20 @@
                 <span id="error_itemDescription" class="text-danger"></span>
               </div>
 
+              <!-- RFP Status -->
+              <div class="form-group">
+                <label for="RfpStatus">RFP Status</label>
+                <input
+                  type="text"
+                  step="0.01"
+                  id="rfpStatus"
+                  name="rfp_status"
+                  class="form-control"
+                  disabled
+                />
+                <span id="error_rfpStatus" class="text-danger"></span>
+              </div>
+
               <!-- Min Price -->
               <div class="form-group">
                 <label for="itemMinPrice">Min Price</label>
@@ -153,9 +167,10 @@
         const item_price = "<%= rfp.item_price %>";
         const total_price = "<%= rfp.total_cost %>";
         const status = "<%= rfp.status %>";
+        const rfpStatus = "<%= rfp.rfp_status %>";
         const applyRfpForm = $("#applyRfpForm");
         const notificationArea = $("#notificationArea");
-
+        
         // Set RFP details
         $("#itemName").val(name);
         $("#itemDescription").val(description);
@@ -165,6 +180,7 @@
         $("#itemPrice").val(item_price);
         $("#totalCost").val(total_price);
         $("#itemStatus").val(status);
+        $("#rfpStatus").val(rfpStatus);
       });
     </script>
   </body>

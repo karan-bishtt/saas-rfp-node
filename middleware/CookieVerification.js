@@ -8,7 +8,7 @@ const { USERSTATUS } = require("../helpers/constant");
  * @param {function} next
  * @returns
  */
-const authenticateCookieToken = (req, res, next) => {
+const authenticateCookieToken = async (req, res, next) => {
   try {
     const token =
       req.cookies.auth_token || req.headers.authorization?.split(" ")[1];
@@ -19,7 +19,6 @@ const authenticateCookieToken = (req, res, next) => {
 
     const decoded = jwt.verify(token, process.env.JWT_SECRET);
     req.user = decoded;
-
     if (
       !decoded ||
       req.user.status === USERSTATUS.pending ||

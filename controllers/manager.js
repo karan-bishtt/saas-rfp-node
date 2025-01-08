@@ -39,7 +39,7 @@ const getManagers = async (req, res) => {
 };
 
 // This method is used to approve the manager
-const approveManager = async (req, res) => {
+const managerStatusChange = async (req, res) => {
   try {
     const { error, value } = approveUserStatusValidator.validate(req.body);
     if (error) {
@@ -59,23 +59,52 @@ const approveManager = async (req, res) => {
         status: false,
         message: getMessage("common.userNotFound"),
       });
-    } else if (user.status == USERSTATUS.approved) {
+    } else if (user.status == status && status == USERSTATUS.approved) {
       return res.status(400).json({
         status: false,
         message: getMessage("manager.alreadyApproved"),
       });
+    } else if (user.status == status && status == USERSTATUS.rejected) {
+      return res.status(400).json({
+        status: false,
+        message: getMessage("manager.alreadyRejected"),
+      });
     }
+    is_registration_request = user.status == USERSTATUS.pending;
     // updating the user status
     user.status = status;
     await user.save();
     let name = user.name || user.email;
     // Sending mail
+    const email = user.email;
     if (status === USERSTATUS.approved) {
-      sendMails(
-        user.email,
-        "Registration Request Approved",
-        `Hi ${name}, \n Your registration request has been approved. please click on the link ${process.env.LOGIN_URL} for login.`
-      );
+      if (is_registration_request) {
+        sendMails(
+          email,
+          "Registration Request Approved",
+          `Hi ${name}, \n Your registration request has been approved. please click on the link ${process.env.LOGIN_URL} for login.`
+        );
+      } else {
+        sendMails(
+          email,
+          "Status Change to Active",
+          `Hi ${name}, \n Your status has been marked active by the admin. Click on the link ${process.env.LOGIN_URL} for login.`
+        );
+      }
+    } else if (status == USERSTATUS.rejected) {
+      if (is_registration_request) {
+        sendMails(
+          email,
+          "Registration Request Disapproved",
+          `Hi ${name}, \n Your registration request has been disapproved by the admin.`
+        );
+      } else {
+        sendMails(
+          email,
+          "Status Change to De-active",
+          `Hi ${name}, \n Your account has been deactivated by the admin.`
+        );
+      }
     }
 
     res.json({
@@ -91,4 +120,4 @@ const approveManager = async (req, res) => {
   }
 };
 
-module.exports = { getManagers, approveManager };
+module.exports = { getManagers, managerStatusChange };

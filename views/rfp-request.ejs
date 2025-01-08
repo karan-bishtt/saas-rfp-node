@@ -140,11 +140,11 @@
                 : "text-success";
 
             const actionButtons =
-              rfp.status === "open"
+              rfp.status === "open" && rfp.rfp_status === "open"
                 ? `
               <button class="btn btn-sm btn-primary apply-rfp-vendor" data-id="${rfp.rfp_id}">Apply</button>
             `
-                : rfp.status === "applied"
+                : rfp.status === "applied" || rfp.rfp_status !== "open"
                 ? `<button
                   class="btn btn-sm btn-primary view-applied-rfp"
                   data-id="${rfp.rfp_id}"

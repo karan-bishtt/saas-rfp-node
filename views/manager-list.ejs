@@ -139,7 +139,9 @@
               <button class="btn btn-sm btn-primary change-status-approve" data-id="${manager.user_id}">Approve</button>
               <button class="btn btn-sm btn-danger change-status-disapprove" data-id="${manager.user_id}">Reject</button>
             `
-                : "";
+                : manager.status === "Rejected"
+                ? `<button class="btn btn-sm btn-primary change-status-approve" data-id="${manager.user_id}">Approve</button>`
+                : `<button class="btn btn-sm btn-danger change-status-disapprove" data-id="${manager.user_id}">Reject</button>`;
 
             const row = `
               <tr id="row-${manager.user_id}">
