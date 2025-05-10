@@ -1,0 +1,226 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Vendor RFPs</title>
+
+    <!-- Include CSS and other dependencies from the base layout -->
+    <%- include('partials/base.ejs') %>
+  </head>
+  <body data-sidebar="dark">
+    <!-- Include Header -->
+    <%- include('partials/headers.ejs') %>
+
+    <!-- Include Sidebar -->
+    <%- include('partials/sidebars.ejs') %>
+
+    <!-- Main Content Starts Here -->
+    <div class="main-content">
+      <div class="container">
+        <div class="row">
+          <div class="col">
+            <div class="d-flex justify-content-between align-items-center">
+              <h1 class="mb-5">Vendor RFPs</h1>
+              <div
+                id="notificationArea"
+                class="alert"
+                style="display: none"
+              ></div>
+            </div>
+            <!-- Loading Indicator -->
+            <div class="loading-indicator" id="loadingIndicator">
+              Loading data, please wait...
+            </div>
+
+            <!-- No Data Available Message -->
+            <div class="no-data d-none" id="noData">No data available.</div>
+            <table class="table table-bordered d-none" id="rfpTable">
+              <thead>
+                <tr>
+                  <th>Sno.</th>
+                  <th>Item Name</th>
+                  <th>Description</th>
+                  <th>Category</th>
+                  <th>Quantity</th>
+                  <th>Last Date</th>
+                  <th>Min Price</th>
+                  <th>Max Price</th>
+                  <th>Status</th>
+                  <th>Action</th>
+                </tr>
+              </thead>
+              <tbody>
+                <!-- Rows will be dynamically added here -->
+              </tbody>
+            </table>
+            <div
+              id="pagination"
+              class="d-none d-flex justify-content-center mt-3"
+            >
+              <!-- Pagination controls will be dynamically added here -->
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Include Footer -->
+    <%- include('partials/footer.ejs') %>
+
+    <script>
+      $(document).ready(function () {
+        const tenant_id = "<%= user.tenant_id %>";
+        const role = "<%= user.roles %>";
+        const rowsPerPage = 5; // Number of rows per page
+        let currentPage = 1; // Current page
+        let rfps = []; // Data storage
+
+        // Show loading indicator
+        const loadingIndicator = $("#loadingIndicator");
+        const noDataMessage = $("#noData");
+        const rfpTable = $("#rfpTable");
+        const pagination = $("#pagination");
+
+        // Fetch RFP vendor data
+        function fetchRfpVendorData() {
+          loadingIndicator.removeClass("d-none");
+
+          $.ajax({
+            url: `/api/${role}/rfp-request`,
+            method: "GET",
+            contentType: "application/json",
+            data: { tenant_id: tenant_id },
+            beforeSend: function (xhr) {
+              xhr.setRequestHeader(
+                "Authorization",
+                `Bearer ${localStorage.getItem("auth_token")}`
+              );
+            },
+            success: function (response) {
+              if (response.status) {
+                rfps = response.rfps;
+
+                if (rfps.length === 0) {
+                  noDataMessage.removeClass("d-none"); // Show no data message
+                } else {
+                  renderTable(); // Render table on load
+                  renderPagination(); // Render pagination controls
+                }
+              }
+            },
+            error: function (xhr, status, error) {
+              console.error("Error fetching data from API:", error);
+            },
+            complete: function () {
+              loadingIndicator.addClass("d-none"); // Hide loading indicator after data is fetched
+              if (rfps.length > 0) {
+                rfpTable.removeClass("d-none"); // Show table
+                pagination.removeClass("d-none"); // Show pagination
+              }
+            },
+          });
+        }
+
+        // Render table data with pagination
+        function renderTable() {
+          const tableBody = $("#rfpTable tbody");
+          tableBody.empty();
+
+          const start = (currentPage - 1) * rowsPerPage;
+          const end = start + rowsPerPage;
+          const paginatedData = rfps.slice(start, end);
+
+          paginatedData.forEach(function (rfp, index) {
+            const statusClass =
+              rfp.status === "open"
+                ? "text-warning"
+                : rfp.status === "closed"
+                ? "text-danger"
+                : "text-success";
+
+            const actionButtons =
+              rfp.status === "open" && rfp.rfp_status === "open"
+                ? `
+              <button class="btn btn-sm btn-primary apply-rfp-vendor" data-id="${rfp.rfp_id}">Apply</button>
+            `
+                : rfp.status === "applied" || rfp.rfp_status !== "open"
+                ? `<button
+                  class="btn btn-sm btn-primary view-applied-rfp"
+                  data-id="${rfp.rfp_id}"
+                >
+                  View
+                </button>`
+                : "";
+
+            const categories =
+              rfp.category.map((cat) => cat.name).join(", ") || "N/A";
+
+            const row = `
+              <tr id="row-${rfp.rfp_id}">
+                <td>${start + index + 1}</td>
+                <td>${rfp.item_name}</td>
+                <td>${rfp.item_description}</td>
+                <td>${categories}</td>
+                <td>${rfp.quantity}</td>
+                <td>${rfp.last_date}</td>
+                <td>${rfp.minimum_price}</td>
+                <td>${rfp.maximum_price}</td>
+                <td class=${statusClass}>${rfp.status}</td>
+                <td id="action-${rfp.rfp_id}">${actionButtons}</td>
+              </tr>
+            `;
+            tableBody.append(row);
+          });
+
+          // Attach click event to the action buttons
+          $(".apply-rfp-vendor")?.on("click", function () {
+            const rfpId = $(this).data("id");
+            window.location.href = `/${role}/apply-rfp/${rfpId}`;
+          });
+          $(".view-applied-rfp")?.on("click", function () {
+            const rfpId = $(this).data("id");
+            window.location.href = `/${role}/view-rfp/${rfpId}`;
+          });
+        }
+
+        // Render pagination controls
+        function renderPagination() {
+          pagination.empty();
+
+          const totalPages = Math.ceil(rfps.length / rowsPerPage);
+
+          for (let i = 1; i <= totalPages; i++) {
+            const button = `<button class="btn btn-sm ${
+              i === currentPage ? "btn-primary" : "btn-secondary"
+            } mx-1 page-btn" data-page="${i}">${i}</button>`;
+            pagination.append(button);
+          }
+
+          $(".page-btn").on("click", function () {
+            currentPage = parseInt($(this).data("page"));
+            renderTable();
+            renderPagination();
+          });
+        }
+
+        // Initial Fetch Call
+        fetchRfpVendorData();
+      });
+
+      // Function to show notification
+      function showNotification(type, message) {
+        const notificationArea = $("#notificationArea");
+        notificationArea
+          .removeClass()
+          .addClass(`alert alert-${type}`)
+          .text(message)
+          .fadeIn();
+
+        setTimeout(() => {
+          notificationArea.fadeOut();
+        }, 3000);
+      }
+    </script>
+  </body>
+</html>

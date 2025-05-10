@@ -101,20 +101,22 @@ const getRfpQuotes = async (req, res) => {
           attributes: ["name", "email", "mobile"],
         },
       ],
-      attributes: ["vendor_id", "item_price", "total_cost"],
+      attributes: ["vendor_id", "item_price", "total_cost", "status"],
     });
 
     // Format the response as needed
     const response = {
       status: true,
-      quotes: vendorQuotes.map((quote) => ({
-        vendor_id: quote.vendor_id,
-        name: quote.vendor.name,
-        item_price: quote.item_price,
-        total_cost: quote.total_cost,
-        email: quote.vendor.email,
-        mobile: quote.vendor.mobile,
-      })),
+      quotes:
+        vendorQuotes.map((quote) => ({
+          vendor_id: quote.vendor_id,
+          name: quote.vendor.name,
+          item_price: quote.item_price,
+          total_cost: quote.total_cost,
+          email: quote.vendor.email,
+          mobile: quote.vendor.mobile,
+          status: quote.status,
+        })) || [],
     };
 
     return res.json(response);
@@ -165,7 +167,7 @@ const closeRfp = async (req, res) => {
     createAuditLog({
       user_id: user.id,
       resource_type: "RFP",
-      resource_id: result[0].id,
+      resource_id: valid_rfp?.id,
       action: "close",
       changes: req.body || req.params,
       tenant_id,
@@ -174,7 +176,7 @@ const closeRfp = async (req, res) => {
       status: true,
       message: getMessage("rfps.closeRfpSuccessfully").replace(
         "{}",
-        valid_rfp.name
+        valid_rfp.item_name
       ),
     });
   } catch (error) {
@@ -194,8 +196,8 @@ const createRfp = async (req, res) => {
 
     if (error) {
       return res.status(400).json({
-        response: "error",
-        error: error.details[0].message,
+        status: false,
+        message: error.details[0].message,
       });
     }
     let {
@@ -242,7 +244,7 @@ const createRfp = async (req, res) => {
     if (!isCategoryPresent) {
       return res.status(400).json({
         status: false,
-        error: getMessage("rfps.invalidCategoryForTenant"),
+        message: getMessage("rfps.invalidCategoryForTenant"),
       });
     }
 

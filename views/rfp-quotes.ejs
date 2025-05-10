@@ -1,0 +1,177 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>RFP Quotes</title>
+
+    <!-- Include CSS and other dependencies from the base layout -->
+    <%- include('partials/base.ejs') %>
+  </head>
+  <body data-sidebar="dark">
+    <!-- Include Header -->
+    <%- include('partials/headers.ejs') %>
+
+    <!-- Include Sidebar -->
+    <%- include('partials/sidebars.ejs') %>
+
+    <!-- Main Content Starts Here -->
+    <div id="notificationArea" class="alert d-none"></div>
+    <div class="main-content">
+      <div class="container">
+        <div class="row">
+          <div class="col">
+            <div class="d-flex justify-content-between align-items-center">
+              <h1 class="mb-5">RFP Quotes</h1>
+            </div>
+            <!-- Loading Indicator -->
+            <div class="loading-indicator" id="loadingIndicator">
+              Loading data, please wait...
+            </div>
+
+            <!-- No Data Available Message -->
+            <div class="no-data d-none" id="noData">No data available.</div>
+            <table class="table table-bordered d-none" id="rfpTable">
+              <thead>
+                <tr>
+                  <th>Sno.</th>
+                  <th>Vendor Name</th>
+                  <th>Email</th>
+                  <th>Mobile</th>
+                  <th>Item Price</th>
+                  <th>Total Cost</th>
+                  <th>Status</th>
+                </tr>
+              </thead>
+              <tbody>
+                <!-- Rows will be dynamically added here -->
+              </tbody>
+            </table>
+            <!-- Pagination Controls -->
+            <div
+              id="pagination"
+              class="d-flex justify-content-center mt-3"
+            ></div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Include Footer -->
+    <%- include('partials/footer.ejs') %>
+
+    <script>
+      $(document).ready(function () {
+        const tenant_id = "<%= user.tenant_id %>";
+        const role = "<%= user.roles %>";
+        const rfp_id = "<%= rfp_id %>";
+        const rowsPerPage = 5; // Number of rows per page
+        let currentPage = 1; // Current page
+        let quotes = []; // Data storage
+
+        // Show loading indicator
+        const loadingIndicator = $("#loadingIndicator");
+        const noDataMessage = $("#noData");
+        const rfpTable = $("#rfpTable");
+        const pagination = $("#pagination");
+
+        // Fetch RFP quotes
+        function fetchRfpQuotes() {
+          loadingIndicator.removeClass("d-none");
+
+          $.ajax({
+            url: `/api/${role}/get-quotes`,
+            method: "GET",
+            contentType: "application/json",
+            data: { rfp_id: rfp_id, tenant_id: tenant_id },
+            beforeSend: function (xhr) {
+              xhr.setRequestHeader(
+                "Authorization",
+                `Bearer ${localStorage.getItem("auth_token")}`
+              );
+            },
+            success: function (response) {
+              if (response.status) {
+                quotes = response.quotes;
+
+                if (quotes.length === 0) {
+                  noDataMessage.removeClass("d-none"); // Show no data message
+                } else {
+                  renderTable(); // Render table on load
+                  renderPagination(); // Render pagination controls
+                }
+              }
+            },
+            error: function (xhr, status, error) {
+              console.error("Error fetching data from API:", error);
+            },
+            complete: function () {
+              loadingIndicator.addClass("d-none"); // Hide loading indicator after data is fetched
+              if (quotes.length > 0) {
+                rfpTable.removeClass("d-none"); // Show table
+                pagination.removeClass("d-none"); // Show pagination
+              }
+            },
+          });
+        }
+
+        // Render table data
+        function renderTable() {
+          const tableBody = $("#rfpTable tbody");
+          tableBody.empty();
+
+          const start = (currentPage - 1) * rowsPerPage;
+          const end = start + rowsPerPage;
+          const paginatedData = quotes.slice(start, end);
+
+          paginatedData.forEach(function (quote, index) {
+            const statusClass =
+              quote.status === "open"
+                ? "text-warning"
+                : quote.status === "closed"
+                ? "text-danger"
+                : "text-success";
+
+            const row = `
+              <tr>
+                <td>${start + index + 1}</td>
+                <td>${quote.name}</td>
+                <td>${quote.email}</td>
+                <td>${quote.mobile}</td>
+                <td>${quote.item_price || "-"}</td>
+                <td>${quote.total_cost || "-"}</td>
+                <td class=${statusClass}>${quote.status}</td>
+              </tr>
+            `;
+            tableBody.append(row);
+          });
+        }
+
+        // Render pagination controls
+        function renderPagination() {
+          pagination.empty();
+
+          const totalPages = Math.ceil(quotes.length / rowsPerPage);
+
+          // Add page numbers
+          for (let i = 1; i <= totalPages; i++) {
+            const button = `<button class="btn btn-sm ${
+              i === currentPage ? "btn-primary" : "btn-secondary"
+            } mx-1 page-btn" data-page="${i}">${i}</button>`;
+            pagination.append(button);
+          }
+
+          // Event handlers for pagination buttons
+          $(".page-btn").on("click", function () {
+            currentPage = parseInt($(this).data("page"));
+            renderTable();
+            renderPagination();
+          });
+        }
+
+        // Initial Fetch
+        fetchRfpQuotes();
+      });
+    </script>
+  </body>
+</html>

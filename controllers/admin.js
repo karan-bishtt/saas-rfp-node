@@ -5,15 +5,16 @@ const {
   approveUserStatusValidator,
   approveAdminStatusValidator,
 } = require("../validators/common");
-const { ROLES, USERSTATUS } = require("../helpers/constant");
+const { ROLES, USERSTATUS, TENANT_STATUS } = require("../helpers/constant");
 const { sendMails } = require("../helpers/mailer");
 const Users = db.Users;
+const Tenants = db.Tenants;
 
 // This method is used to get the admins
 const getAdmins = async (req, res) => {
   try {
     const admins = await Users.findAll({
-      attributes: ["id", "name", "email", "mobile"],
+      attributes: ["id", "name", "email", "mobile", "status"],
       where: {
         roles: "admin",
       },
@@ -41,7 +42,7 @@ const getAdmins = async (req, res) => {
 };
 
 // This method is used to approve the admin
-const approveAdmin = async (req, res) => {
+async function adminStatusChange(req, res) {
   try {
     const { error, value } = approveAdminStatusValidator.validate(req.body);
     if (error) {
@@ -61,12 +62,18 @@ const approveAdmin = async (req, res) => {
         status: false,
         message: getMessage("common.userNotFound"),
       });
-    } else if (user.status == USERSTATUS.approved) {
+    } else if (user.status == status && status == USERSTATUS.approved) {
       return res.status(400).json({
         status: false,
         message: getMessage("admin.alreadyApproved"),
       });
+    } else if (user.status == status && status == USERSTATUS.rejected) {
+      return res.status(400).json({
+        status: false,
+        message: getMessage("admin.alreadyRejected"),
+      });
     }
+    is_registration_request = user.status == USERSTATUS.pending;
     // updating the user status
     user.status = status;
     await user.save();
@@ -74,11 +81,44 @@ const approveAdmin = async (req, res) => {
     let name = user.name || user.email;
     // Sending mail
     if (status == USERSTATUS.approved) {
-      sendMails(
-        user.email,
-        "Registration Request Approved",
-        `Hi ${name}, \n Your registration request has been approved. please click on the link ${process.env.LOGIN_URL} for login.`
+      // activating the tenant
+      await Tenants.update(
+        { status: TENANT_STATUS.active },
+        { where: { id: user.tenant_id } }
       );
+      if (is_registration_request) {
+        sendMails(
+          user.email,
+          "Registration Request Approved",
+          `Hi ${name}, \n Your registration request has been approved. please click on the link ${process.env.LOGIN_URL} for login.`
+        );
+      } else {
+        sendMails(
+          user.email,
+          "Account Status Change",
+          `Hi ${name}, \n Your account has been activated. please click on the link ${process.env.LOGIN_URL} for login.`
+        );
+      }
+    } else if (status == USERSTATUS.rejected) {
+      // activating the tenant
+      await Tenants.update(
+        { status: TENANT_STATUS.closed },
+        { where: { id: user.tenant_id } }
+      );
+
+      if (is_registration_request) {
+        sendMails(
+          user.email,
+          "Registration Request Rejected",
+          `Hi ${name}, \n Your registration request has been rejected.`
+        );
+      } else {
+        sendMails(
+          user.email,
+          "Account Status Change",
+          `Hi ${name}, \n Your account has been deactivated by the super admin.`
+        );
+      }
     }
     res.json({
       status: true,
@@ -92,6 +132,6 @@ const approveAdmin = async (req, res) => {
       message: getMessage("admin.approveFailed"),
     });
   }
-};
+}
 
-module.exports = { getAdmins, approveAdmin };
+module.exports = { getAdmins, adminStatusChange };

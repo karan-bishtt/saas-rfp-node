@@ -68,6 +68,7 @@ const getRfpVendor = async (req, res) => {
           item_price: rfpVendor.item_price || null,
           total_cost: rfpVendor.total_cost || null,
           status: rfpVendor.status || null,
+          rfp_status: rfp?.status || "open",
         };
       }),
     };
@@ -98,7 +99,6 @@ const applyRfp = async (req, res) => {
     const rfpVendor = await RfpVendors.findOne({
       where: {
         rfp_id: rfp_id,
-        status: "closed",
         vendor_id: vendor.id,
         tenant_id: tenant_id,
       },
@@ -121,12 +121,17 @@ const applyRfp = async (req, res) => {
         message: getMessage("rfpVendor.rfpNotOpen"),
       });
     } else if (
-      item_price < rfpVendor.rfp.min_price ||
-      item_price > rfpVendor.rfp.max_price
+      item_price < rfpVendor.rfp.minimum_price ||
+      item_price > rfpVendor.rfp.maximum_price
     ) {
       return res.status(400).json({
         status: false,
-        message: getMessage("rfpVendor.invalidPrice"),
+        message: getMessage("rfpVendor.invalidItemPrice"),
+      });
+    } else if (total_cost != item_price * rfpVendor.rfp.quantity) {
+      return res.status(400).json({
+        status: false,
+        message: getMessage("rfpVendor.invalidTotalCost"),
       });
     }
     rfpVendor.update({

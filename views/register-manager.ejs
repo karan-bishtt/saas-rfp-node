@@ -1,0 +1,367 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <title>Register | RFP System</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <meta
+      content="Premium Multipurpose Admin & Dashboard Template"
+      name="description"
+    />
+    <meta content="Themesbrand" name="author" />
+
+    <!-- App favicon -->
+    <link rel="shortcut icon" href="images/favicon.ico" />
+
+    <!-- Bootstrap Css -->
+    <link
+      href="css/bootstrap.min.css"
+      id="bootstrap-style"
+      rel="stylesheet"
+      type="text/css"
+    />
+    <!-- Icons Css -->
+    <link href="css/icons.min.css" rel="stylesheet" type="text/css" />
+    <!-- App Css-->
+    <link
+      href="css/app.min.css"
+      id="app-style"
+      rel="stylesheet"
+      type="text/css"
+    />
+
+    <!-- jQuery -->
+    <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.6.0/jquery.min.js"></script>
+  </head>
+
+  <body>
+    <div class="home-btn d-none d-sm-block">
+      <a href="#" class="text-dark"><i class="fas fa-home h2"></i></a>
+    </div>
+    <div class="account-pages my-5 pt-sm-5">
+      <div class="container">
+        <div class="row justify-content-center">
+          <div class="col-md-8 col-lg-6 col-xl-8">
+            <div class="card overflow-hidden">
+              <div class="bg-soft-primary">
+                <div class="row">
+                  <div class="col-12">
+                    <div class="text-primary p-4">
+                      <h5 class="text-primary">Welcome to RFP System!</h5>
+                      <p>Register as Manager</p>
+                    </div>
+                  </div>
+                </div>
+              </div>
+              <div class="card-body pt-0">
+                <div class="p-4">
+                  <form id="registrationForm" class="form-horizontal">
+                    <!-- Error Message -->
+                    <div id="error_message" class="alert alert-danger d-none">
+                      <span></span>
+                    </div>
+
+                    <!-- Success Message -->
+                    <div
+                      id="success_message"
+                      class="alert alert-primary d-none"
+                    >
+                      <span></span>
+                    </div>
+
+                    <div class="row">
+                      <!-- First Name -->
+                      <div class="col-md-12 col-lg-6">
+                        <div class="form-group">
+                          <label for="firstname">First Name*</label>
+                          <input
+                            type="text"
+                            class="form-control"
+                            name="firstname"
+                            id="firstname"
+                            placeholder="Enter First Name"
+                          />
+                          <span id="error_firstname" class="text-danger"></span>
+                        </div>
+                      </div>
+                      <!-- Last Name -->
+                      <div class="col-md-12 col-lg-6">
+                        <div class="form-group">
+                          <label for="lastname">Last Name</label>
+                          <input
+                            type="text"
+                            class="form-control"
+                            name="lastname"
+                            id="lastname"
+                            placeholder="Enter Last Name"
+                          />
+                          <span id="error_lastname" class="text-danger"></span>
+                        </div>
+                      </div>
+
+                      <!-- Company Name -->
+                      <div class="col-md-12 col-lg-6">
+                        <div class="form-group">
+                          <label for="company_name">Select Company*</label>
+                          <select
+                            class="form-control"
+                            name="tenant_id"
+                            id="tenant_id"
+                          >
+                            <option value="">Select Company</option>
+                            <!-- Default Option -->
+                          </select>
+                          <span id="error_tenant_id" class="text-danger"></span>
+                        </div>
+                      </div>
+
+                      <!-- Email -->
+                      <div class="col-md-12 col-lg-6">
+                        <div class="form-group">
+                          <label for="email">Email*</label>
+                          <input
+                            type="email"
+                            class="form-control"
+                            name="email"
+                            id="email"
+                            placeholder="Enter Email"
+                          />
+                          <span id="error_email" class="text-danger"></span>
+                        </div>
+                      </div>
+
+                      <!-- Phone Number -->
+                      <div class="col-md-12 col-lg-6">
+                        <div class="form-group">
+                          <label for="mobile">Phone Number*</label>
+                          <input
+                            type="number"
+                            class="form-control"
+                            name="mobile"
+                            id="mobile"
+                            placeholder="Enter Phone Number"
+                          />
+                          <span id="error_mobile" class="text-danger"></span>
+                        </div>
+                      </div>
+
+                      <!-- Password -->
+                      <div class="col-md-12 col-lg-6">
+                        <div class="form-group">
+                          <label for="password">Password*</label>
+                          <input
+                            type="password"
+                            class="form-control"
+                            name="password"
+                            id="password"
+                            placeholder="Enter Password"
+                          />
+                          <span id="error_password" class="text-danger"></span>
+                        </div>
+                      </div>
+
+                      <!-- Confirm Password -->
+                      <div class="col-md-12 col-lg-6">
+                        <div class="form-group">
+                          <label for="confirm_password"
+                            >Confirm Password*</label
+                          >
+                          <input
+                            type="password"
+                            class="form-control"
+                            name="confirm_password"
+                            id="confirm_password"
+                            placeholder="Confirm Password"
+                          />
+                          <span
+                            id="error_confirm_password"
+                            class="text-danger"
+                          ></span>
+                        </div>
+                      </div>
+
+                      <!-- Submit Button -->
+                      <div class="col-md-12 mt-3">
+                        <button
+                          type="button"
+                          id="register_button"
+                          class="btn btn-primary btn-block waves-effect waves-light"
+                        >
+                          Register
+                        </button>
+                      </div>
+                    </div>
+                    <div class="mt-4 text-center">
+                      <a href="<%= loginUrl %>" class="text-muted"
+                        ><i class="mdi mdi-lock mr-1"></i> Login</a
+                      >
+                    </div>
+                  </form>
+                </div>
+              </div>
+            </div>
+            <div class="mt-5 text-center">
+              <p>
+                &copy; Copyright <i class="mdi mdi-heart text-danger"></i> RFP
+                System
+              </p>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <script>
+      $(document).ready(function () {
+        // Populate company dropdown
+        populateCompanyDropdown();
+
+        // Form Submission
+        $("#register_button").click(function () {
+          // Clear previous error messages
+          $(".text-danger").text("");
+          $("#error_message").addClass("d-none").text("");
+          $("#success_message").addClass("d-none").text("");
+
+          // Gather form data
+          const formData = {
+            firstname: $("#firstname").val(),
+            lastname: $("#lastname").val(),
+            email: $("#email").val(),
+            mobile: $("#mobile").val(),
+            password: $("#password").val(),
+            confirm_password: $("#confirm_password").val(),
+            tenant_id: $("#tenant_id").val(),
+          };
+
+          let isValid = true;
+
+          // Validate form fields
+          for (const [key, value] of Object.entries(formData)) {
+            if (
+              ((typeof value === "string" && !value.trim()) ||
+                (typeof value === "number" && isNaN(value))) &&
+              key !== "last_name"
+            ) {
+              if (key === "tenant_id") {
+                $(`#error_${key}`).text("Company is required.");
+              } else if (key == "mobile") {
+                $(`#error_${key}`).text(`Phone number is required.`);
+              } else {
+                $(`#error_${key}`).text(
+                  `${key.replace("_", " ")} is required.`
+                );
+              }
+              isValid = false;
+            }
+          }
+
+          if (formData.password !== formData.confirm_password) {
+            $("#error_confirm_password").text("Passwords do not match.");
+            isValid = false;
+          }
+
+          // Stop submission if validation fails
+          if (!isValid) {
+            return;
+          }
+
+          // Send AJAX request
+          $.ajax({
+            url: "/api/register-manager",
+            type: "POST",
+            data: JSON.stringify(formData),
+            contentType: "application/json",
+            success: function (response) {
+              if (response.status) {
+                $("#success_message")
+                  .removeClass("d-none")
+                  .text(response.message);
+
+                setTimeout(() => {
+                  window.location.href = "/";
+                }, 1000);
+              } else {
+                // Display errors
+                $("#error_message")
+                  .removeClass("d-none")
+                  .text(response.message);
+              }
+            },
+            beforeSend: function () {
+              // Disable button and show loading state
+              $("#register_button").prop("disabled", true).text("Loading...");
+            },
+            error: function (xhr) {
+              const errorMessage =
+                xhr.responseJSON?.message ||
+                "An error occurred. Please try again.";
+              $("#error_message").removeClass("d-none").text(errorMessage);
+              $("#success_message").addClass("d-none").text("");
+            },
+            complete: function () {
+              // Re-enable button and reset text
+              $("#register_button").prop("disabled", false).text("Register");
+            },
+          });
+        });
+
+        /**
+         * Fetches companies from the API and populates the company dropdown
+         */
+        function populateCompanyDropdown() {
+          const companyDropdown = $("#tenant_id");
+          $.ajax({
+            url: "/api/tenants", // Replace with your actual API endpoint
+            type: "GET",
+            beforeSend: function () {
+              // Show a loading message in the dropdown
+              companyDropdown.html(
+                '<option value="">Loading companies...</option>'
+              );
+              companyDropdown.prop("disabled", true);
+            },
+            success: function (response) {
+              if (
+                response.status &&
+                response?.data?.tenants &&
+                Object.keys(response.data.tenants)?.length > 0
+              ) {
+                // Clear existing options
+                companyDropdown.find("option").remove();
+                // Add default option
+                companyDropdown.append(
+                  '<option value="">Select Company</option>'
+                );
+
+                // Populate options
+                Object.values(response.data.tenants).forEach((company) => {
+                  companyDropdown.append(
+                    `<option value="${company.id}">${company.name}</option>`
+                  );
+                });
+
+                companyDropdown.prop("disabled", false);
+              } else {
+                // Show no data message
+                companyDropdown.find("option").remove();
+                companyDropdown.append(
+                  '<option value="">No Company is registered yet</option>'
+                );
+                companyDropdown.prop("disabled", true);
+              }
+            },
+            error: function () {
+              // Show a loading message in the dropdown
+              companyDropdown.html('<option value="">Select Company</option>');
+              companyDropdown.prop("disabled", true);
+              $("#error_message")
+                .removeClass("d-none")
+                .text("An error occurred. Please try again.");
+            },
+          });
+        }
+      });
+    </script>
+  </body>
+</html>

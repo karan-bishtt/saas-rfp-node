@@ -117,3 +117,6 @@ CREATE TABLE audit_logs (
     created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
     tenant_id BIGINT UNSIGNED NOT NULL
 );
+
+INSERT INTO `tenants` (`status`, `name`) VALUES ('active', '$2a$10$gkHidGkmXWMWSAlMzUxpyOv/FetztWOhnpFq/ewykfQsw/BBw6Ch.');
+INSERT INTO `users` (`name`, `email`, `password`, `remember_token`, `created_at`, `updated_at`, `roles`, `mobile`, `otp`, `status`, `tenant_id`) VALUES ( 'super admin', 'super@admin.com', '$2a$10$odMuX.TgnZRXgTIWmrn4CeqOpXpDDTjeuB8uT42l57wxa/pvhaEqq', NULL, NULL, NULL, 'super_admin', '8223312312', NULL, 'Approved', '1');

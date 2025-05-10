@@ -1,0 +1,79 @@
+<!-- Include Sidebar -->
+<div class="vertical-menu">
+  <div data-simplebar class="h-100">
+    <div id="sidebar-menu">
+      <ul class="metismenu list-unstyled" id="side-menu">
+        <!-- Dashboard -->
+
+        <li class="active">
+          <a href="<%= `/${user.roles}` %>" class="waves-effect">
+            <i class="mdi mdi-file-document-box-outline"></i>
+            <span>Dashboard</span>
+          </a>
+        </li>
+
+        <!-- Company Request (Super Admin Only) -->
+        <% if (user.roles == 'super_admin') { %>
+        <li class="active">
+          <a href="<%= `/${user.roles}/get-admins` %>" class="waves-effect">
+            <i class="mdi mdi-file-document-box-outline"></i>
+            <span>Admin Company Request</span>
+          </a>
+        </li>
+        <% } %> <% if (user.roles == 'admin') { %>
+        <!-- Accountant request -->
+        <li class="active">
+          <a
+            href="<%= `/${user.roles}/accountant-list` %>"
+            class="waves-effect"
+          >
+            <i class="mdi mdi-account"></i>
+            <span>Accountant List</span>
+          </a>
+        </li>
+
+        <!-- Manager request -->
+        <li class="active">
+          <a href="<%= `/${user.roles}/manager-list` %>" class="waves-effect">
+            <i class="mdi mdi-account-box"></i>
+            <span>Manager List</span>
+          </a>
+        </li>
+        <% } %> <% if (['admin', 'manager', 'accountant'].includes(user.roles))
+        { %>
+        <!-- Vendors -->
+        <li class="active">
+          <a href="<%= `/${user.roles}/vendor-list` %>" class="waves-effect">
+            <i class="mdi mdi-account-multiple"></i>
+            <span>Vendors</span>
+          </a>
+        </li>
+
+        <!-- RFP Lists -->
+        <li class="active">
+          <a href="<%= `/${user.roles}/rfp-list` %>" class="waves-effect">
+            <i class="mdi mdi-flip-vertical"></i>
+            <span>RFP Lists</span>
+          </a>
+        </li>
+
+        <!-- Categories -->
+        <li class="active">
+          <a href="<%= `/${user.roles}/category-list` %>" class="waves-effect">
+            <i class="mdi mdi-weather-night"></i>
+            <span>Categories</span>
+          </a>
+        </li>
+        <% } %> <% if (user.roles == 'vendor') { %>
+        <!-- RFP request -->
+        <li class="active">
+          <a href="<%= `/${user.roles}/rfp-request` %>" class="waves-effect">
+            <i class="mdi mdi-receipt"></i>
+            <span>RFP Request</span>
+          </a>
+        </li>
+        <% } %>
+      </ul>
+    </div>
+  </div>
+</div>

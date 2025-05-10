@@ -13,12 +13,14 @@ const Category = db.Category;
 const getVendors = async (req, res) => {
   try {
     const user = req.user;
-    const { tenant_id } = req.query || user.tenant_id;
+    const { tenant_id, category_id } = req.query || user || {};
+
+    // Base query for fetching vendors
     const vendors = await Users.findAll({
       attributes: ["id", "name", "email", "mobile", "status"],
       include: [
         {
-          model: VendorDetails, // Make sure you've imported VendorDetails at the top if it's in a different file
+          model: VendorDetails,
           as: "vendorDetails",
           attributes: ["no_of_employees", "last_three_year_revenue"],
           include: [
@@ -26,20 +28,28 @@ const getVendors = async (req, res) => {
               model: Category,
               as: "categories",
               attributes: ["id", "name"],
-              //   exclude the join table attribute
               through: { attributes: [] },
+              where: category_id ? { id: category_id } : undefined,
+              required: !!category_id,
             },
           ],
+          required: true,
         },
       ],
-      where: {
-        roles: "vendor",
-        tenant_id: tenant_id,
-      },
+      where: category_id
+        ? {
+            roles: "vendor",
+            tenant_id: tenant_id,
+            status: USERSTATUS.approved,
+          }
+        : {
+            roles: "vendor",
+            tenant_id: tenant_id,
+          },
     });
+
     const result = vendors.map((vendor) => {
-      // Extract vendor details if they exist; otherwise, set default values
-      const details = vendor.vendorDetails ? vendor.vendorDetails[0] : null; // Assuming it's a one-to-one relationship for simplicity
+      const details = vendor.vendorDetails ? vendor.vendorDetails[0] : null;
       const categories =
         details?.categories.map((cat) => ({
           id: cat.id,
@@ -50,13 +60,14 @@ const getVendors = async (req, res) => {
         name: vendor.name,
         email: vendor.email,
         mobile: vendor.mobile,
-        revenue: details ? details.last_three_year_revenue : "N/A", // Change 'revenue' to 'last_three_year_revenue' as per model
+        revenue: details ? details.last_three_year_revenue : "N/A",
         category: categories,
         no_of_employees: details ? details.no_of_employees : "N/A",
         user_id: vendor.id,
         status: vendor.status,
       };
     });
+
     res.json({
       status: true,
       data: { vendors: result },
@@ -71,7 +82,7 @@ const getVendors = async (req, res) => {
 };
 
 // This method is used to approve the vendor
-const approveVendor = async (req, res) => {
+const vendorStatusChange = async (req, res) => {
   try {
     const { error, value } = approveUserStatusValidator.validate(req.body);
     if (error) {
@@ -91,24 +102,53 @@ const approveVendor = async (req, res) => {
         status: false,
         message: getMessage("common.userNotFound"),
       });
-    } else if (user.status == USERSTATUS.approved) {
+    } else if (user.status == status && status == USERSTATUS.approved) {
       return res.status(400).json({
         status: false,
         message: getMessage("vendor.alreadyApproved"),
       });
+    } else if (user.status == status && status == USERSTATUS.rejected) {
+      return res.status(400).json({
+        status: false,
+        message: getMessage("vendor.alreadyRejected"),
+      });
     }
+
+    is_registration_request = user.status == USERSTATUS.pending;
     // updating the user status
     user.status = status;
     await user.save();
     let name = user.name || user.email;
     // Sending mail
+    const email = user.email;
     if (status === USERSTATUS.approved) {
-      const email = user.email;
-      sendMails(
-        email,
-        "Registration Request Approved",
-        `Hi ${name}, \n Your registration request has been approved. please click on the link ${process.env.LOGIN_URL} for login.`
-      );
+      if (is_registration_request) {
+        sendMails(
+          email,
+          "Registration Request Approved",
+          `Hi ${name}, \n Your registration request has been approved. please click on the link ${process.env.LOGIN_URL} for login.`
+        );
+      } else {
+        sendMails(
+          email,
+          "Status Change to Active",
+          `Hi ${name}, \n Your status has been marked active by the admin. Click on the link ${process.env.LOGIN_URL} for login.`
+        );
+      }
+    } else if (status == USERSTATUS.rejected) {
+      if (is_registration_request) {
+        sendMails(
+          email,
+          "Registration Request Disapproved",
+          `Hi ${name}, \n Your registration request has been disapproved by the admin.`
+        );
+      } else {
+        sendMails(
+          email,
+          "Status Change to De-active",
+          `Hi ${name}, \n Your status has been deactivated by the admin.`
+        );
+      }
     }
 
     res.json({
@@ -155,10 +195,7 @@ const getVendorsInExcel = async (req, res) => {
     const vendorData = vendors.map((vendor) => {
       const details = vendor.vendorDetails ? vendor.vendorDetails[0] : null;
       const categories =
-        details?.categories.map((cat) => ({
-          id: cat.id,
-          name: cat.name,
-        })) || [];
+        details?.categories.map((cat) => cat.name).join(", ") || "";
 
       return {
         Name: vendor.name,
@@ -167,7 +204,7 @@ const getVendorsInExcel = async (req, res) => {
         Revenue: details ? details.last_three_year_revenue : "N/A",
         Categories: categories,
         Employees: details ? details.no_of_employees : "N/A",
-        Status: details ? details.status : "N/A",
+        Status: vendor.status || "N/A",
       };
     });
 
@@ -204,4 +241,4 @@ const getVendorsInExcel = async (req, res) => {
   }
 };
 
-module.exports = { getVendors, approveVendor, getVendorsInExcel };
+module.exports = { getVendors, vendorStatusChange, getVendorsInExcel };

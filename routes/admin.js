@@ -10,7 +10,7 @@ const {
 // Importing vendor admin controller functions
 const {
   getVendors,
-  approveVendor,
+  vendorStatusChange,
   getVendorsInExcel,
 } = require("../controllers/vendors");
 
@@ -23,9 +23,9 @@ const {
 } = require("../controllers/rfps");
 
 // Importing manager and accountant controller functions
-const { approveManager, getManagers } = require("../controllers/manager");
+const { managerStatusChange, getManagers } = require("../controllers/manager");
 const {
-  approveAccountant,
+  accountantStatusChange,
   getAccountant,
 } = require("../controllers/accountant");
 const { formDataMiddleware } = require("../middleware/multer");
@@ -35,14 +35,14 @@ const { formDataMiddleware } = require("../middleware/multer");
 // Categories route
 router.get("/categories", categoriesMethod);
 router.post("/add-category", categoriesMethod);
-router.post("/upload-category", uploadCategoriesFromExcel);
-router.put("/change-category-name", formDataMiddleware, categoriesMethod);
+router.post("/upload-category", formDataMiddleware, uploadCategoriesFromExcel);
+router.put("/change-category-name", categoriesMethod);
 router.delete("/delete-category", categoriesMethod);
 
 // Vendors route
 router.get("/vendor-list", getVendors);
 router.get("/vendor-excel", getVendorsInExcel);
-router.post("/approve-vendor", approveVendor);
+router.post("/approve-vendor", vendorStatusChange);
 
 // RFP routes
 router.post("/create-rfp", createRfp);
@@ -52,10 +52,10 @@ router.get("/get-quotes", getRfpQuotes);
 
 // Manager routes
 router.get("/manager-list", getManagers);
-router.post("/approve-manager", approveManager);
+router.post("/approve-manager", managerStatusChange);
 
 // Accountant routes
 router.get("/accountant-list", getAccountant);
-router.post("/approve-accountant", approveAccountant);
+router.post("/approve-accountant", accountantStatusChange);
 
 module.exports = router;

@@ -5,7 +5,12 @@ const bcrypt = require("bcryptjs");
 let db = require("../models/index");
 const { sendMails } = require("../helpers/mailer");
 const { getMessage } = require("../lang");
-const { ROLES, USERSTATUS, SUPERUSERTENANT } = require("../helpers/constant");
+const {
+  ROLES,
+  USERSTATUS,
+  SUPERUSERTENANT,
+  TENANT_STATUS,
+} = require("../helpers/constant");
 const { Op } = require("sequelize");
 
 const {
@@ -17,6 +22,10 @@ const {
   confirmPasswordValidator,
   loginValidator,
 } = require("../validators/auth");
+const {
+  clearCookieToken,
+  setCookieToken,
+} = require("../middleware/CookieVerification");
 let Users = db.Users;
 let VendorDetails = db.VendorDetails;
 let Accountant = db.Accountant;
@@ -47,13 +56,14 @@ const login = async (req, res) => {
     if (!user) {
       return res
         .status(400)
-        .json({ status: false, error: getMessage("auth.useNotPresent") });
+        .json({ status: false, message: getMessage("auth.useNotPresent") });
     }
     is_matched = await bcrypt.compare(password, user.password);
     if (!is_matched) {
-      return res
-        .status(400)
-        .json({ status: false, error: getMessage("auth.invalidCredentials") });
+      return res.status(400).json({
+        status: false,
+        message: getMessage("auth.invalidCredentials"),
+      });
     } else if (user.status === USERSTATUS.pending) {
       return res.status(401).json({
         status: false,
@@ -68,6 +78,20 @@ const login = async (req, res) => {
           : getMessage("auth.rejectedRequest"),
       });
     }
+
+    const tenant = await Tenants.findOne({ where: { id: user.tenant_id } });
+    if (!tenant) {
+      return res.status(400).json({
+        status: false,
+        message: getMessage("auth.tenantIdNotExist"),
+      });
+    } else if (tenant.status === TENANT_STATUS.closed) {
+      return res.status(400).json({
+        status: false,
+        message: getMessage("auth.tenantInactive"),
+      });
+    }
+
     // generate token
     const token = await generateToken(user);
     const response = {
@@ -79,11 +103,14 @@ const login = async (req, res) => {
       type: user.type,
       roles: user.roles,
     };
+    // Set token in cookie
+    setCookieToken(res, token);
+
     res.json(response);
   } catch (error) {
     res
       .status(400)
-      .json({ status: false, error: getMessage("auth.invalidCredentials") });
+      .json({ status: false, message: getMessage("auth.invalidCredentials") });
   }
 };
 
@@ -107,7 +134,7 @@ const registerAdmin = async (req, res) => {
     if (existingAdmin) {
       return res
         .status(400)
-        .json({ status: false, error: getMessage("auth.emailAlreadyExist") });
+        .json({ status: false, message: getMessage("auth.emailAlreadyExist") });
     }
     // Check if the tenant already exists
     const doesExist = await Tenants.findOne({
@@ -184,7 +211,7 @@ const registerAccount = async (req, res) => {
     if (existingAccountant) {
       return res
         .status(400)
-        .json({ status: false, error: getMessage("auth.emailAlreadyExist") });
+        .json({ status: false, message: getMessage("auth.emailAlreadyExist") });
     }
 
     // Check if the tenant already exists
@@ -253,7 +280,7 @@ const registerManager = async (req, res) => {
     if (existingManager) {
       return res
         .status(400)
-        .json({ status: false, error: getMessage("auth.emailAlreadyExist") });
+        .json({ status: false, message: getMessage("auth.emailAlreadyExist") });
     }
 
     // Check if the tenant already exists
@@ -329,7 +356,7 @@ const registerVendor = async (req, res) => {
     if (existingVendor) {
       return res
         .status(400)
-        .json({ status: false, error: getMessage("auth.emailAlreadyExist") });
+        .json({ status: false, message: getMessage("auth.emailAlreadyExist") });
     }
 
     // Check if the tenant already exists
@@ -355,7 +382,7 @@ const registerVendor = async (req, res) => {
     if (!categories || categories.length !== category.length) {
       return res.status(400).json({
         status: false,
-        error: getMessage("rfps.invalidCategoryForTenant"),
+        message: getMessage("rfps.invalidCategoryForTenant"),
       });
     }
 
@@ -563,6 +590,7 @@ const getTenants = async (req, res) => {
   try {
     const tenant = await Tenants.findAll({
       where: {
+        status: TENANT_STATUS.active,
         name: {
           [Op.not]: SUPERUSERTENANT,
         },
@@ -589,6 +617,28 @@ const getTenants = async (req, res) => {
   }
 };
 
+/**
+ * This method is used to logout the user
+ * @param {object} req
+ * @param {object} res
+ */
+const logout = (req, res) => {
+  try {
+    // Clear the auth_token cookie
+    clearCookieToken(res);
+    // Optionally redirect to the login page or send a success response
+    return res
+      .status(200)
+      .json({ status: true, message: getMessage("auth.logout") });
+  } catch (error) {
+    res
+      .status(400)
+      .json({ status: false, message: getMessage("auth.failedLogout") });
+  }
+};
+
+module.exports = { logout };
+
 // Check if the user exists
 module.exports = {
   login,
@@ -600,4 +650,5 @@ module.exports = {
   registerManager,
   registerAccount,
   getTenants,
+  logout,
 };

@@ -4,7 +4,7 @@ const router = express.Router();
 // Importing vendor admin controller functions
 const {
   getVendors,
-  approveVendor,
+  vendorStatusChange,
   getVendorsInExcel,
 } = require("../controllers/vendors");
 
@@ -17,19 +17,13 @@ const { categoriesMethod } = require("../controllers/category");
 // Get all categories
 router.get("/categories", categoriesMethod);
 
-// Get list of vendors
+// Vendors route
 router.get("/vendor-list", getVendors);
-
-// Get list of vendors
 router.get("/vendor-excel", getVendorsInExcel);
-
-// Approve a vendor
-router.post("/approve-vendor", approveVendor);
+router.post("/approve-vendor", vendorStatusChange);
 
 // View RFP
 router.get("/view-rfp", getRfp);
-
-// View quotes for an RFP
 router.get("/get-quotes", getRfpQuotes);
 
 module.exports = router;
